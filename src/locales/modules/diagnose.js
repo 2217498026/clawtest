@@ -1,0 +1,25 @@
+import { _ } from '../helper.js'
+
+export default {
+  title: _('连接诊断', 'Connection Diagnosis', '連線診斷', '接続診断', '연결 진단', 'Chẩn đoán kết nối', 'Diagnóstico de conexión', 'Diagnóstico de conexão', 'Диагностика подключения', 'Diagnostic de connexion', 'Verbindungsdiagnose'),
+  desc: _('检测 Gateway 连接各环节是否正常', 'Check Gateway connection health step by step', '檢測 Gateway 連線各環節是否正常', 'Gateway 接続の各ステップを確認', 'Gateway 연결 상태를 단계별로 확인', 'Kiểm tra kết nối Gateway từng bước', 'Verificar estado de conexión Gateway', 'Verificar conexão do Gateway passo a passo', 'Проверка подключения к Gateway пошагово', 'Vérifier la connexion Gateway étape par étape', 'Gateway-Verbindung schrittweise prüfen'),
+  runDiagnose: _('开始诊断', 'Run Diagnosis', '開始診斷', '診断開始', '진단 시작', 'Bắt đầu chẩn đoán', 'Iniciar diagnóstico', 'Iniciar diagnóstico', 'Запустить диагностику', 'Lancer le diagnostic', 'Diagnose starten'),
+  running: _('正在诊断...', 'Diagnosing...', '正在診斷...', '診断中...', '진단 중...', 'Đang chẩn đoán...', 'Diagnosticando...', 'Diagnosticando...', 'Диагностика...', 'Diagnostic en cours...', 'Diagnose läuft...'),
+  passed: _('通过', 'Passed', '通過', '合格', '통과', 'Đạt', 'Aprobado', 'Aprovado', 'Пройден', 'Réussi', 'Bestanden'),
+  failed: _('未通过', 'Failed', '未通過', '不合格', '실패', 'Thất bại', 'Fallido', 'Falhou', 'Не пройден', 'Échoué', 'Fehlgeschlagen'),
+  allPassed: _('✅ 所有检查项通过', '✅ All checks passed', '✅ 所有檢查項通過', '✅ すべてのチェックに合格', '✅ 모든 검사 통과', '✅ Tất cả kiểm tra đạt', '✅ Todas las verificaciones pasaron', '✅ Todas as verificações passaram', '✅ Все проверки пройдены', '✅ Tous les contrôles réussis', '✅ Alle Prüfungen bestanden'),
+  envInfo: _('环境信息', 'Environment Info', '環境資訊', '環境情報', '환경 정보', 'Thông tin môi trường', 'Info del entorno', 'Info do ambiente', 'Информация об окружении', 'Info environnement', 'Umgebungsinfo'),
+  openclawDir: _('配置目录', 'Config Directory', '配置目錄', '設定ディレクトリ', '설정 디렉토리'),
+  port: _('端口', 'Port', '連接埠', 'ポート', '포트'),
+  authMode: _('认证模式', 'Auth Mode', '認證模式', '認証モード', '인증 모드'),
+  deviceKey: _('设备密钥', 'Device Key', '裝置金鑰', 'デバイスキー', '장치 키'),
+  errLogExcerpt: _('错误日志摘要', 'Error Log Excerpt', '錯誤日誌摘要', 'エラーログ抜粋', '오류 로그 요약'),
+  stepConfig: _('配置文件', 'Config File', '配置檔案', '設定ファイル', '설정 파일'),
+  stepDeviceKey: _('设备密钥', 'Device Key', '裝置金鑰', 'デバイスキー', '장치 키'),
+  stepOrigins: _('允许来源', 'Allowed Origins', '允許來源', '許可オリジン', '허용 출처'),
+  stepTcp: _('TCP 端口', 'TCP Port', 'TCP 連接埠', 'TCP ポート', 'TCP 포트'),
+  stepHttp: _('HTTP 健康', 'HTTP Health', 'HTTP 健康', 'HTTP ヘルス', 'HTTP 상태'),
+  stepErrLog: _('错误日志', 'Error Log', '錯誤日誌', 'エラーログ', '오류 로그'),
+  diagnoseFailed: _('诊断执行失败', 'Diagnosis failed', '診斷執行失敗', '診断の実行に失敗', '진단 실행 실패'),
+  noData: _('尚未运行诊断，点击上方按钮开始', 'No diagnosis yet, click the button above to start', '尚未執行診斷，點擊上方按鈕開始', 'まだ診断を実行していません。上のボタンをクリックして開始してください', '아직 진단을 실행하지 않았습니다. 위 버튼을 클릭하여 시작하세요'),
+}

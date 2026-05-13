@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenClaw</title>
+  <link rel="icon" href="/favicon.ico">
+  <!-- 样式由 main.js 通过 Vite 统一加载 -->
+  <style>
+    /* 启动加载屏（内联，零依赖，立即渲染） */
+    #splash {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #f8f9fb;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    @media (prefers-color-scheme: dark) { #splash { background: #0f0f14; } }
+    #splash.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    #splash .sp-logo {
+      width: 56px; height: 56px; margin-bottom: 20px;
+      color: #6366f1; animation: sp-pulse 2s ease-in-out infinite;
+    }
+    #splash .sp-name {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 18px; font-weight: 600; letter-spacing: 0.5px;
+      color: #18181b; margin-bottom: 28px;
+    }
+    @media (prefers-color-scheme: dark) { #splash .sp-name { color: #e4e4e7; } }
+    #splash .sp-bar {
+      width: 120px; height: 3px; border-radius: 2px; overflow: hidden;
+      background: rgba(99, 102, 241, 0.15);
+    }
+    #splash .sp-bar-inner {
+      width: 40%; height: 100%; border-radius: 2px;
+      background: #6366f1;
+      animation: sp-slide 1.2s ease-in-out infinite;
+    }
+    #splash .sp-site {
+      margin-top: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px; color: #a1a1aa; letter-spacing: 0.3px;
+    }
+    #splash .sp-site a {
+      color: #6366f1; text-decoration: none;
+    }
+    #splash .sp-site a:hover { text-decoration: underline; }
+    @keyframes sp-slide {
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(200%); }
+      100% { transform: translateX(-100%); }
+    }
+    @keyframes sp-pulse {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <!-- 启动加载屏 -->
+  <div id="splash">
+  <!--   <svg class="sp-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+      <path d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
+    </svg> -->
+    <div class="sp-name">OpenClaw</div>
+    <div class="sp-bar"><div class="sp-bar-inner"></div></div>
+<!--     <div class="sp-site"><a href="https://openclaw.github.io" target="_blank">openclaw.github.io</a></div> -->
+  </div>
+  <script>
+  // 多阶段启动检测：区分"JS未加载（WebView2问题）"与"JS已加载但启动慢"
+  window._splashStart = Date.now();
+  window._jsLoaded = false; // main.js 入口会设为 true
+  window._bootDone = false; // boot() 完成后设为 true
+  window._splashTimer = setInterval(function () {
+    var s = document.getElementById('splash');
+    if (!s) { clearInterval(window._splashTimer); return; }
+    var app = document.getElementById('content');
+    // 已有内容 → 正常隐藏
+    if (app && app.children.length > 0) {
+      s.classList.add('hide');
+      setTimeout(function () { s.remove(); }, 500);
+      clearInterval(window._splashTimer);
+      return;
+    }
+    if (window._bootDone) { clearInterval(window._splashTimer); return; }
+    var elapsed = Date.now() - window._splashStart;
+    var sec = Math.floor(elapsed / 1000);
+    // 阶段1：15秒内 JS 模块未加载 → 可能是真正的 WebView2/资源问题
+    if (!window._jsLoaded && elapsed > 15000) {
+      clearInterval(window._splashTimer);
+      var dk = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      s.innerHTML = '<div style="text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+        + '<div style="font-size:40px;margin-bottom:12px">\u26A0\uFE0F</div>'
+        + '<div style="font-size:16px;font-weight:600;color:' + (dk ? '#e4e4e7' : '#18181b') + ';margin-bottom:8px">\u524D\u7AEF\u8D44\u6E90\u52A0\u8F7D\u5931\u8D25</div>'
+        + '<div style="font-size:12px;color:#71717a;margin-bottom:16px;line-height:1.7">'
+        + 'JavaScript \u6A21\u5757\u672A\u80FD\u5728 15 \u79D2\u5185\u52A0\u8F7D\u3002\u53EF\u80FD\u539F\u56E0\uFF1A<br>'
+        + '\u2022 WebView2 Runtime \u672A\u5B89\u88C5\u6216\u5DF2\u635F\u574F<br>'
+        + '\u2022 \u524D\u7AEF\u8D44\u6E90\u88AB\u5B89\u5168\u8F6F\u4EF6\u62E6\u622A<br>'
+        + '\u2022 \u5E94\u7528\u5B89\u88C5\u4E0D\u5B8C\u6574<br><br>'
+        + '\u8BF7\u5C1D\u8BD5\u5237\u65B0\uFF1B\u5982\u591A\u6B21\u5931\u8D25\uFF0C\u8BF7\u786E\u8BA4 <a href="https://go.microsoft.com/fwlink/p/?LinkId=2124703" style="color:#6366f1">WebView2 Runtime</a> \u5DF2\u5B89\u88C5</div>'
+        + '<button onclick="location.reload()" style="padding:6px 16px;border-radius:6px;border:none;background:#6366f1;color:#fff;font-size:12px;cursor:pointer">\u5237\u65B0\u91CD\u8BD5</button></div>';
+      return;
+    }
+    // 阶段2：JS 已加载但 boot() 仍在运行 → 显示等待提示（不报错）
+    if (window._jsLoaded && elapsed > 20000) {
+      var hint = s.querySelector('.sp-hint');
+      if (!hint) {
+        hint = document.createElement('div');
+        hint.className = 'sp-hint';
+        hint.style.cssText = 'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:12px;color:#a1a1aa;margin-top:16px';
+        s.appendChild(hint);
+      }
+      hint.textContent = '\u6B63\u5728\u521D\u59CB\u5316\u73AF\u5883\uFF0C\u8BF7\u7A0D\u5019... (' + sec + 's)';
+    }
+    // 阶段3：90秒仍未完成 → 才显示真正的错误
+    if (elapsed > 90000) {
+      clearInterval(window._splashTimer);
+      var dk2 = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+      s.innerHTML = '<div style="text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+        + '<div style="font-size:40px;margin-bottom:12px">\u26A0\uFE0F</div>'
+        + '<div style="font-size:16px;font-weight:600;color:' + (dk2 ? '#e4e4e7' : '#18181b') + ';margin-bottom:8px">\u542F\u52A8\u8D85\u65F6</div>'
+        + '<div style="font-size:12px;color:#71717a;margin-bottom:16px;line-height:1.7">'
+        + '\u5E94\u7528\u5DF2\u7B49\u5F85 90 \u79D2\u4ECD\u672A\u5B8C\u6210\u521D\u59CB\u5316\u3002<br>'
+        + '\u53EF\u80FD\u662F\u7F51\u7EDC\u73AF\u5883\u68C0\u6D4B\u8D85\u65F6\u6216\u540E\u7AEF\u670D\u52A1\u5F02\u5E38\u3002<br>'
+        + '\u8BF7\u5C1D\u8BD5\u5237\u65B0\u6216\u91CD\u542F\u5E94\u7528\u3002</div>'
+        + '<button onclick="location.reload()" style="padding:6px 16px;border-radius:6px;border:none;background:#6366f1;color:#fff;font-size:12px;cursor:pointer">\u5237\u65B0\u91CD\u8BD5</button></div>';
+    }
+  }, 3000);
+  </script>
+
+  <div id="app">
+    <aside id="sidebar"></aside>
+    <div id="main-col">
+      <div id="update-banner" class="update-banner update-banner-hidden"></div>
+      <div id="gw-banner" class="gw-banner gw-banner-hidden"></div>
+      <main id="content"></main>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

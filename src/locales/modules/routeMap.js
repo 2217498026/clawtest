@@ -1,0 +1,26 @@
+import { _ } from '../helper.js'
+
+export default {
+  title: _('路由地图', 'Route Map', '路由地圖', 'ルートマップ', '라우트 맵', 'Bản đồ tuyến', 'Mapa de rutas', 'Mapa de rotas', 'Карта маршрутов', 'Carte des routes', 'Routenkarte'),
+  subtitle: _('可视化查看渠道 → 绑定 → 智能体的全局路由关系', 'Visualize Channel → Binding → Agent routing relationships', '可視化查看頻道 → 綁定 → 智能體的路由關係', 'チャンネル → バインディング → エージェントのルーティング関係を視覚化', '채널 → 바인딩 → 에이전트 라우팅 관계 시각화', 'Trực quan hóa kênh → ràng buộc → tác nhân', 'Visualizar relaciones de enrutamiento', 'Visualizar relações de roteamento', 'Визуализация маршрутов', 'Visualiser les relations de routage', 'Routing-Beziehungen visualisieren'),
+  refresh: _('刷新', 'Refresh', '重新整理', '更新', '새로고침', 'Làm mới', 'Actualizar', 'Atualizar', 'Обновить', 'Actualiser', 'Aktualisieren'),
+  loading: _('正在加载路由数据…', 'Loading route data…', '正在載入路由資料…', 'ルートデータ読み込み中…', '라우트 데이터 로딩 중…', 'Đang tải…', 'Cargando…', 'Carregando…', 'Загрузка…', 'Chargement…', 'Laden…'),
+  noData: _('暂无路由数据，请先配置 Agent 和消息渠道', 'No route data. Please configure Agents and Channels first.', '暫無路由資料，請先設定 Agent 和訊息頻道', 'ルートデータがありません', '라우트 데이터 없음', 'Chưa có dữ liệu', 'Sin datos', 'Sem dados', 'Нет данных', 'Aucune donnée', 'Keine Daten'),
+  channels: _('消息渠道', 'Channels', '訊息頻道', 'チャンネル', '채널', 'Kênh', 'Canales', 'Canais', 'Каналы', 'Canaux', 'Kanäle'),
+  agents: _('智能体', 'Agents', '智能體', 'エージェント', '에이전트', 'Tác nhân', 'Agentes', 'Agentes', 'Агенты', 'Agents', 'Agenten'),
+  bindings: _('路由规则', 'Bindings', '路由規則', 'バインディング', '바인딩', 'Ràng buộc', 'Vínculos', 'Vínculos', 'Привязки', 'Liaisons', 'Bindungen'),
+  defaultAgent: _('默认 Agent', 'Default Agent', '預設 Agent', 'デフォルト Agent', '기본 Agent', 'Agent mặc định', 'Agente predeterminado', 'Agente padrão', 'Агент по умолчанию', 'Agent par défaut', 'Standard-Agent'),
+  enabled: _('已启用', 'Enabled', '已啟用', '有効', '활성화됨', 'Đã bật', 'Habilitado', 'Habilitado', 'Включено', 'Activé', 'Aktiviert'),
+  disabled: _('已禁用', 'Disabled', '已停用', '無効', '비활성화됨', 'Đã tắt', 'Deshabilitado', 'Desabilitado', 'Отключено', 'Désactivé', 'Deaktiviert'),
+  matchAll: _('匹配所有', 'Match All', '匹配所有', 'すべて一致', '모두 일치', 'Khớp tất cả', 'Coincidir todo', 'Corresponder tudo', 'Все совпадения', 'Tout', 'Alle'),
+  peer: _('指定对象', 'Specific Peer', '指定對象', '指定ピア', '특정 피어', 'Đối tượng', 'Par específico', 'Par específico', 'Конкретный пир', 'Pair spécifique', 'Spezifischer Peer'),
+  account: _('账号', 'Account', '帳號', 'アカウント', '계정', 'Tài khoản', 'Cuenta', 'Conta', 'Аккаунт', 'Compte', 'Konto'),
+  statsAgents: _('智能体', 'Agents', '智能體', 'エージェント', '에이전트', 'Tác nhân', 'Agentes', 'Agentes', 'Агенты', 'Agents', 'Agenten'),
+  statsChannels: _('渠道', 'Channels', '頻道', 'チャンネル', '채널', 'Kênh', 'Canales', 'Canais', 'Каналы', 'Canaux', 'Kanäle'),
+  statsBindings: _('绑定', 'Bindings', '綁定', 'バインディング', '바인딩', 'Ràng buộc', 'Vínculos', 'Vínculos', 'Привязки', 'Liaisons', 'Bindungen'),
+  subAgentRelations: _('子代理关系', 'Sub-agent Relations', '子代理關係', 'サブエージェント関係', '서브 에이전트 관계', 'Quan hệ phụ', 'Relaciones de sub-agente', 'Relações de sub-agente', 'Связи субагентов', 'Relations sous-agent', 'Sub-Agent-Beziehungen'),
+  subAgentCall: _('子代理调用', 'Sub-agent Call', '子代理調用', 'サブエージェント呼出', '서브 에이전트 호출', 'Gọi phụ', 'Llamada sub-agente', 'Chamada sub-agente', 'Вызов субагента', 'Appel sous-agent', 'Sub-Agent-Aufruf'),
+  legendBinding: _('显式绑定', 'Explicit Binding', '顯式綁定', '明示的バインド', '명시적 바인딩', 'Ràng buộc rõ ràng', 'Vinculación explícita', 'Vinculação explícita', 'Явная привязка', 'Liaison explicite', 'Explizite Bindung'),
+  legendDefault: _('默认路由', 'Default Route', '預設路由', 'デフォルトルート', '기본 라우트', 'Tuyến mặc định', 'Ruta predeterminada', 'Rota padrão', 'Маршрут по умолчанию', 'Route par défaut', 'Standardroute'),
+  clickToNavigate: _('点击卡片跳转到对应配置页', 'Click card to navigate to config page', '點擊卡片跳轉到對應設定頁', 'カードをクリックして設定ページへ', '카드를 클릭하여 설정 페이지로 이동', 'Nhấp để chuyển đến trang cấu hình', 'Haga clic para ir a la configuración', 'Clique para ir à configuração', 'Нажмите для перехода', 'Cliquez pour accéder', 'Klicken Sie zur Konfiguration'),
+}
