@@ -52,11 +52,7 @@
       }
     },
     "macOS": {
-      "infoPlist": {
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
-        }
-      }
+      "infoPlist": "Info.plist"
     }
   }
 }
