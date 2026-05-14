@@ -644,18 +644,12 @@ function showPurchaseModal() {
       <div style="display:flex;gap:24px;justify-content:center;padding:24px 24px 16px">
         <!-- 左侧：扫码支付 -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
-          <div style="width:180px;height:180px;border-radius:12px;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:2px dashed #a5d6a7;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#2e7d32;font-size:13px;font-weight:500">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
-            <div style="margin-top:6px;font-size:11px;opacity:0.7">QR Code</div>
-          </div>
+          <img src="/images/payfor.png" width="180" height="180" style="border-radius:12px;object-fit:contain" alt="扫码支付">
           <span style="font-size:14px;font-weight:600;color:var(--text-primary)">扫码支付</span>
         </div>
         <!-- 右侧：联系客服 -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
-          <div style="width:180px;height:180px;border-radius:12px;background:linear-gradient(135deg,#e3f2fd,#bbdefb);border:2px dashed #90caf9;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#1565c0;font-size:13px;font-weight:500">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>
-            <div style="margin-top:6px;font-size:11px;opacity:0.7">QR Code</div>
-          </div>
+          <img src="/images/custom.png" width="180" height="180" style="border-radius:12px;object-fit:contain" alt="联系客服">
           <span style="font-size:14px;font-weight:600;color:var(--text-primary)">联系客服</span>
         </div>
       </div>
