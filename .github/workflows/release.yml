@@ -1,5 +1,5 @@
 # ClawPanel 发布构建工作流
-# 推送 v* 标签时自动构建跨平台产物并创建 GitHub Release
+# 推送 v* 标签时自动构建 macOS (Apple Silicon) 产物并创建 GitHub Release
 name: Release
 
 on:
@@ -15,7 +15,7 @@ on:
         default: 'v1.0.0'
 
 jobs:
-  # ── 跨平台构建 job ─────────────────────────────────────────────────────────
+  # ── macOS (Apple Silicon) 构建 job ─────────────────────────────────────────
   build:
     name: 构建 (${{ matrix.platform.name }})
     runs-on: ${{ matrix.platform.os }}
@@ -29,22 +29,6 @@ jobs:
             os: macos-latest
             args: --target aarch64-apple-darwin
             rust_target: aarch64-apple-darwin
-          - name: macOS (Intel)
-            os: macos-latest
-            args: --target x86_64-apple-darwin
-            rust_target: x86_64-apple-darwin
-          - name: Linux (x64)
-            os: ubuntu-latest
-            args: ""
-            rust_target: ""
-          - name: Windows (x64)
-            os: windows-latest
-            args: ""
-            rust_target: ""
-          - name: Windows (x64) 完整包
-            os: windows-latest
-            args: ""
-            rust_target: ""
 
     steps:
       - name: 签出代码
@@ -88,20 +72,7 @@ jobs:
           workspaces: src-tauri -> target
           key: ${{ matrix.platform.name }}
 
-      - name: 安装 Linux 系统依赖
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            librsvg2-dev \
-            patchelf \
-            libssl-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev
-
       - name: 构建 Tauri 应用
-        if: matrix.platform.name != 'Windows (x64) 完整包'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -112,62 +83,15 @@ jobs:
           # APPLE_ID: ${{ secrets.APPLE_ID }}
           # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Windows 代码签名（可选）
-          # TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          # TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ env.TAG_NAME }}
           releaseName: "ClawPanel ${{ env.TAG_NAME }}"
-          releaseBody: "正在构建所有平台安装包，请稍候..."
+          releaseBody: "正在构建 macOS (Apple Silicon) 安装包，请稍候..."
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.platform.args }}
 
-      # ── Windows 完整包（内嵌 WebView2 离线安装器）──────────────────────────────
-      - name: 配置 WebView2 完整包模式
-        if: matrix.platform.name == 'Windows (x64) 完整包'
-        shell: bash
-        run: |
-          node -e "
-            const fs = require('fs');
-            const f = 'src-tauri/tauri.conf.json';
-            const c = JSON.parse(fs.readFileSync(f, 'utf8'));
-            c.bundle.windows.webviewInstallMode = { type: 'offlineInstaller', silent: true };
-            fs.writeFileSync(f, JSON.stringify(c, null, 2));
-          "
-
-      - name: 构建 Windows 完整包
-        if: matrix.platform.name == 'Windows (x64) 完整包'
-        shell: bash
-        run: npx tauri build
-
-      - name: 重命名并上传完整包
-        if: matrix.platform.name == 'Windows (x64) 完整包'
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${TAG_NAME#v}"
-          BUNDLE_DIR="src-tauri/target/release/bundle"
-
-          # 确保 Release 已存在（可能被其他 matrix job 的 tauri-action 创建）
-          gh release create "$TAG_NAME" --title "ClawPanel $TAG_NAME" \
-            --notes "正在构建所有平台安装包，请稍候..." 2>/dev/null || true
-
-          # 重命名 NSIS exe 并上传
-          mv "${BUNDLE_DIR}/nsis/ClawPanel_${VERSION}_x64-setup.exe" \
-             "${BUNDLE_DIR}/nsis/ClawPanel_${VERSION}_x64-setup-full.exe"
-          gh release upload "$TAG_NAME" \
-             "${BUNDLE_DIR}/nsis/ClawPanel_${VERSION}_x64-setup-full.exe" --clobber
-
-          # 重命名 MSI 并上传
-          mv "${BUNDLE_DIR}/msi/ClawPanel_${VERSION}_x64_en-US.msi" \
-             "${BUNDLE_DIR}/msi/ClawPanel_${VERSION}_x64-full_en-US.msi"
-          gh release upload "$TAG_NAME" \
-             "${BUNDLE_DIR}/msi/ClawPanel_${VERSION}_x64-full_en-US.msi" --clobber
-
-  # ── 所有平台构建完成后，统一更新 Release Notes ─────────────────────────────
-  # 独立 job 确保只执行一次，彻底避免多个 matrix job 的竞争条件
+  # ── 构建完成后更新 Release Notes ───────────────────────────────────────────
   update-release-notes:
     name: 更新 Release Notes
     needs: build
@@ -302,9 +226,9 @@ jobs:
 
           # ── 构建状态 ──
           if [ "$BUILD_RESULT" = "success" ]; then
-            STATUS_BADGE="✅ 全部平台构建成功"
+            STATUS_BADGE="✅ macOS (Apple Silicon) 构建成功"
           else
-            STATUS_BADGE="⚠️ 部分平台构建失败，请查看 [Actions 日志](https://github.com/${REPO}/actions)"
+            STATUS_BADGE="⚠️ 构建失败，请查看 [Actions 日志](https://github.com/${REPO}/actions)"
           fi
 
           # ── 写入 Release Notes ──
@@ -313,32 +237,12 @@ jobs:
             echo ""
             echo "## 📥 下载安装"
             echo ""
-            echo "根据你的操作系统选择对应安装包，点击文件名即可下载："
-            echo ""
             echo "### macOS"
             echo "| 芯片 | 安装包 |"
             echo "|------|--------|"
             echo "| Apple Silicon (M1/M2/M3/M4) | [ClawPanel_${VERSION}_aarch64.dmg](${DL}/ClawPanel_${VERSION}_aarch64.dmg) |"
-            echo "| Intel | [ClawPanel_${VERSION}_x64.dmg](${DL}/ClawPanel_${VERSION}_x64.dmg) |"
             echo ""
             echo '> **⚠️ 首次打开提示"无法验证开发者"？** 在终端执行：`sudo xattr -rd com.apple.quarantine /Applications/ClawPanel.app`，或前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。'
-            echo ""
-            echo "### Windows"
-            echo "| 格式 | 安装包 | 说明 |"
-            echo "|------|--------|------|"
-            echo "| EXE 安装器（推荐） | [ClawPanel_${VERSION}_x64-setup.exe](${DL}/ClawPanel_${VERSION}_x64-setup.exe) | 轻量版 ~10 MB |"
-            echo "| EXE 完整包 | [ClawPanel_${VERSION}_x64-setup-full.exe](${DL}/ClawPanel_${VERSION}_x64-setup-full.exe) | 含 WebView2 ~200 MB |"
-            echo "| MSI 安装器 | [ClawPanel_${VERSION}_x64_en-US.msi](${DL}/ClawPanel_${VERSION}_x64_en-US.msi) | 轻量版 ~10 MB |"
-            echo "| MSI 完整包 | [ClawPanel_${VERSION}_x64-full_en-US.msi](${DL}/ClawPanel_${VERSION}_x64-full_en-US.msi) | 含 WebView2 ~200 MB |"
-            echo ""
-            echo "> **💡 轻量版 vs 完整包**：Win10 1803+ 和 Win11 已预装 WebView2，推荐下载轻量版。如果是内网/断网环境，选择完整包。"
-            echo ""
-            echo "### Linux"
-            echo "| 格式 | 安装包 |"
-            echo "|------|--------|"
-            echo "| AppImage（免安装） | [ClawPanel_${VERSION}_amd64.AppImage](${DL}/ClawPanel_${VERSION}_amd64.AppImage) |"
-            echo "| DEB（Debian/Ubuntu） | [ClawPanel_${VERSION}_amd64.deb](${DL}/ClawPanel_${VERSION}_amd64.deb) |"
-            echo "| RPM（Fedora/RHEL） | [ClawPanel-${VERSION}-1.x86_64.rpm](${DL}/ClawPanel-${VERSION}-1.x86_64.rpm) |"
             echo ""
             echo "---"
             echo ""
@@ -349,7 +253,7 @@ jobs:
             echo "3. 如未安装 OpenClaw，按提示一键安装即可"
             echo "4. 安装完成后自动跳转仪表盘，开始使用"
             echo ""
-            echo '> **系统要求**：Node.js 18+（推荐 22 LTS）'
+            echo '> **系统要求**：macOS 11+ (Apple Silicon)，Node.js 18+（推荐 22 LTS）'
             echo ""
             echo "---"
             echo ""
