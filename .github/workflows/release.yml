@@ -91,7 +91,7 @@ jobs:
           prerelease: false
           args: ${{ matrix.platform.args }}
 
-      # ── 准备 preinstall 脚本（嵌入到 .pkg 中，安装前自动执行 install-openclaw.sh） ──
+      # ── 准备 preinstall 脚本（嵌入到 .pkg 中，安装前自动执行 pkg-preinstall.sh） ──
       - name: 准备 preinstall 脚本
         shell: bash
         run: |
@@ -100,13 +100,15 @@ jobs:
           mkdir -p "$PKG_SCRIPTS_DIR"
 
           # pkgbuild 要求脚本名必须严格为 preinstall / postinstall（无扩展名）
-          cp scripts/install-openclaw.sh "$PKG_SCRIPTS_DIR/preinstall"
+          # 注意：使用 pkg-preinstall.sh（轻量版），避免 installer 进程锁冲突
+          # 完整 OpenClaw 安装流程由 App 首次启动时执行
+          cp scripts/pkg-preinstall.sh "$PKG_SCRIPTS_DIR/preinstall"
           chmod +x "$PKG_SCRIPTS_DIR/preinstall"
 
           # 写明脚本元信息，方便排查
-          echo "已嵌入 preinstall 脚本："
+          echo "已嵌入 preinstall 脚本（轻量版）："
           ls -la "$PKG_SCRIPTS_DIR"
-          head -n 3 "$PKG_SCRIPTS_DIR/preinstall"
+          head -n 5 "$PKG_SCRIPTS_DIR/preinstall"
 
           echo "PKG_SCRIPTS_DIR=$PKG_SCRIPTS_DIR" >> "$GITHUB_ENV"
 
