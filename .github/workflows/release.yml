@@ -91,6 +91,88 @@ jobs:
           prerelease: false
           args: ${{ matrix.platform.args }}
 
+      # ── 准备 preinstall 脚本（嵌入到 .pkg 中，安装前自动执行 install-openclaw.sh） ──
+      - name: 准备 preinstall 脚本
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG_SCRIPTS_DIR="${GITHUB_WORKSPACE}/pkg-scripts"
+          mkdir -p "$PKG_SCRIPTS_DIR"
+
+          # pkgbuild 要求脚本名必须严格为 preinstall / postinstall（无扩展名）
+          cp scripts/install-openclaw.sh "$PKG_SCRIPTS_DIR/preinstall"
+          chmod +x "$PKG_SCRIPTS_DIR/preinstall"
+
+          # 写明脚本元信息，方便排查
+          echo "已嵌入 preinstall 脚本："
+          ls -la "$PKG_SCRIPTS_DIR"
+          head -n 3 "$PKG_SCRIPTS_DIR/preinstall"
+
+          echo "PKG_SCRIPTS_DIR=$PKG_SCRIPTS_DIR" >> "$GITHUB_ENV"
+
+      # ── 通过 pkgbuild 把 Tauri 构建的 .app 打成 .pkg 并嵌入 preinstall ──
+      - name: 生成 .pkg 安装包（内嵌 preinstall）
+        id: build_pkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          TARGET_DIR="src-tauri/target/${{ matrix.platform.rust_target }}/release/bundle/macos"
+
+          if [ ! -d "$TARGET_DIR" ]; then
+            echo "❌ 未找到 macOS 构建产物目录: $TARGET_DIR" >&2
+            find src-tauri/target -name '*.app' -maxdepth 6 -print || true
+            exit 1
+          fi
+
+          # Tauri 产物 .app 名称来自 tauri.conf.json 的 productName（OpenClaw.app）
+          APP_PATH="$(find "$TARGET_DIR" -maxdepth 1 -name '*.app' -type d | head -n1)"
+          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
+            echo "❌ 未找到 .app 产物" >&2
+            ls -la "$TARGET_DIR" || true
+            exit 1
+          fi
+          echo "✅ 找到 .app: $APP_PATH"
+
+          APP_NAME="$(basename "$APP_PATH" .app)"
+          PKG_FILE="ClawPanel_${VERSION}_aarch64.pkg"
+
+          # 使用 pkgbuild 打包，--scripts 指向 preinstall 目录
+          pkgbuild \
+            --component "$APP_PATH" \
+            --install-location "/Applications" \
+            --scripts "$PKG_SCRIPTS_DIR" \
+            --identifier "ai.openclaw.clawpanel.pkg" \
+            --version "$VERSION" \
+            "$PKG_FILE"
+
+          echo "✅ pkg 构建完成: $PKG_FILE"
+          ls -la "$PKG_FILE"
+
+          # 校验 preinstall 是否真的嵌入（通过 pkgutil 展开检查）
+          EXPAND_DIR="$(mktemp -d)"
+          pkgutil --expand "$PKG_FILE" "$EXPAND_DIR/expanded"
+          if [ -f "$EXPAND_DIR/expanded/Scripts/preinstall" ] || \
+             find "$EXPAND_DIR/expanded" -name 'preinstall' | grep -q .; then
+            echo "✅ preinstall 脚本已成功嵌入 .pkg"
+          else
+            echo "⚠️ 警告：未在 .pkg 中找到 preinstall 脚本" >&2
+            find "$EXPAND_DIR/expanded" -type f || true
+          fi
+          rm -rf "$EXPAND_DIR"
+
+          echo "PKG_FILE=$PKG_FILE" >> "$GITHUB_ENV"
+          echo "pkg_file=$PKG_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: 上传 .pkg 到 GitHub Release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG_NAME" "$PKG_FILE" --clobber
+          echo "✅ 已上传到 Release: $PKG_FILE"
+
   # ── 构建完成后更新 Release Notes ───────────────────────────────────────────
   update-release-notes:
     name: 更新 Release Notes
@@ -238,11 +320,14 @@ jobs:
             echo "## 📥 下载安装"
             echo ""
             echo "### macOS"
-            echo "| 芯片 | 安装包 |"
-            echo "|------|--------|"
-            echo "| Apple Silicon (M1/M2/M3/M4) | [ClawPanel_${VERSION}_aarch64.dmg](${DL}/ClawPanel_${VERSION}_aarch64.dmg) |"
+            echo "| 芯片 | 格式 | 安装包 |"
+            echo "|------|------|--------|"
+            echo "| Apple Silicon (M1/M2/M3/M4) | .pkg（推荐，自动安装 OpenClaw） | [ClawPanel_${VERSION}_aarch64.pkg](${DL}/ClawPanel_${VERSION}_aarch64.pkg) |"
+            echo "| Apple Silicon (M1/M2/M3/M4) | .dmg | [ClawPanel_${VERSION}_aarch64.dmg](${DL}/ClawPanel_${VERSION}_aarch64.dmg) |"
             echo ""
-            echo '> **⚠️ 首次打开提示"无法验证开发者"？** 在终端执行：`sudo xattr -rd com.apple.quarantine /Applications/ClawPanel.app`，或前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。'
+            echo '> **💡 .pkg 与 .dmg 的区别**：`.pkg` 会在安装前自动执行 `install-openclaw.sh`（嵌入的 preinstall 脚本），通过国内镜像源一键安装 OpenClaw CLI 与 Gateway 服务；`.dmg` 仅拷贝 App，需首次启动后手动安装 OpenClaw。'
+            echo ""
+            echo '> **⚠️ 首次打开提示“无法验证开发者”？** 在终端执行：`sudo xattr -rd com.apple.quarantine /Applications/ClawPanel.app`，或前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。'
             echo ""
             echo "---"
             echo ""
