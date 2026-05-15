@@ -303,26 +303,18 @@ run_install_openclaw() {
     write_info "找到 install-openclaw.sh: $found"
     write_info "以用户 $CONSOLE_USER (uid=$CONSOLE_UID) 身份执行..."
 
-    # 以控制台用户身份运行安装脚本，设置正确的 HOME
-    # 使用 sudo -u 来切换用户上下文
+    # 以控制台用户身份运行安装脚本，设置正确的 HOME 和 PATH
+    # 直接使用 sudo VAR=VALUE command 语法传递环境变量，避免临时文件权限问题
     if command -v sudo >/dev/null 2>&1; then
         # 确保 PATH 中包含新安装的 node/npm
-        local updated_path="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/opt/node@24/bin:/usr/local/opt/node@24/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
-
-        # 使用临时脚本来包装，保证环境变量正确
-        local wrapper_script
-        wrapper_script="$(mktemp -t openclaw-install-wrapper.XXXXXX)"
-        cat > "$wrapper_script" << WRAPPER_EOF
-#!/bin/bash
-export HOME="$CONSOLE_HOME"
-export USER="$CONSOLE_USER"
-export PATH="$updated_path"
-exec "$found" --silent
-WRAPPER_EOF
-        chmod +x "$wrapper_script"
+        local updated_path="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/opt/node@24/bin:/usr/local/opt/node@24/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
         write_info "正在执行 install-openclaw.sh（此过程可能需要数分钟）..."
-        if sudo -u "$CONSOLE_USER" -i bash "$wrapper_script" >> "$LOG_FILE" 2>&1; then
+        if sudo -u "$CONSOLE_USER" \
+            HOME="$CONSOLE_HOME" \
+            USER="$CONSOLE_USER" \
+            PATH="$updated_path" \
+            bash "$found" --silent >> "$LOG_FILE" 2>&1; then
             write_ok "install-openclaw.sh 执行成功"
         else
             local rc=$?
@@ -332,7 +324,6 @@ WRAPPER_EOF
             tail -20 "$LOG_FILE" | while IFS= read -r line; do write_log "$line"; done
             write_info "---"
         fi
-        rm -f "$wrapper_script"
     else
         write_warn "未找到 sudo，跳过 install-openclaw.sh 执行"
     fi
