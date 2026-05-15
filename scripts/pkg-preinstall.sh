@@ -343,6 +343,17 @@ run_install_openclaw() {
             fi
         fi
 
+        # 修复：npm -g 的默认 prefix（/usr/local/lib/nodejs/...）属 root 不可写
+        # sudo -u chuzu 下执行 sudo npm install -g 时没有 TTY 无法输入密码
+        # 因此设置用户级 npm prefix，确保 chuzu 可写
+        local npm_prefix="$CONSOLE_HOME/.npm-global"
+        mkdir -p "$npm_prefix" 2>/dev/null || true
+        chown -R "$CONSOLE_USER" "$npm_prefix" 2>/dev/null || true
+        if [[ ":$updated_path:" != *":$npm_prefix/bin:"* ]]; then
+            updated_path="$npm_prefix/bin:$updated_path"
+        fi
+        write_info "配置用户级 npm prefix: $npm_prefix"
+
         # ⚠️ 重要：install-openclaw.sh 位于 installd 创建的 sandbox 目录（/private/tmp/PKInstallSandbox.*/）
         # 该目录权限为 700 属 root，sudo -u 切换用户后无法访问脚本文件。
         # 因此先将脚本复制到用户可读的临时位置，再通过 stdin pipe 执行（完全绕过文件访问权限）。
@@ -368,6 +379,7 @@ run_install_openclaw() {
             USER="$CONSOLE_USER" \
             PATH="$updated_path" \
             CLAWPANEL_NODE_OK=1 \
+            NPM_CONFIG_PREFIX="$npm_prefix" \
             bash -s -- --silent >> "$LOG_FILE" 2>&1; then
             printf '===== install-openclaw.sh output end (success) =====\n' >> "$LOG_FILE"
             write_ok "install-openclaw.sh 执行成功"
