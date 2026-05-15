@@ -1,6 +1,6 @@
 {
   "name": "OpenClaw",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "description": "OpenClaw桌面应用",
   "type": "module",

@@ -174,8 +174,10 @@ get_installed_node_version() {
     node_bin="$(command -v node 2>/dev/null || true)"
     if [ -z "$node_bin" ]; then
         local p
-        for p in "/opt/homebrew/bin/node" "/usr/local/bin/node" "/usr/local/opt/node/bin/node" "/opt/homebrew/opt/node@24/bin/node"; do
-            if [ -x "$p" ]; then node_bin="$p"; break; fi
+        for p in "/opt/homebrew/bin/node" "/usr/local/bin/node" "/usr/local/opt/node/bin/node" "/opt/homebrew/opt/node@24/bin/node" "/usr/local/lib/nodejs/node-v${NODE_REQUIRED_VERSION}-darwin-*/bin/node"; do
+            for f in $p; do
+                if [ -x "$f" ]; then node_bin="$f"; break 2; fi
+            done
         done
     fi
     if [ -z "$node_bin" ] && [ -d "$HOME/.nvm/versions/node" ]; then
@@ -280,6 +282,16 @@ ensure_node() {
 
     local current_ver
     current_ver="$(get_installed_node_version)"
+
+    # 兜底：即使 get_installed_node_version 路径扫描失败，也尝试直接调用 node --version
+    # 这可以覆盖 PATH 中能找到 node 但 fallback 路径未覆盖的情况
+    if [ -z "$current_ver" ]; then
+        current_ver="$(node --version 2>/dev/null | tr -d 'v\r\n' || true)"
+        if [ -n "$current_ver" ]; then
+            write_info "通过 node --version 检测到 Node.js: v$current_ver"
+        fi
+    fi
+
     if [ -n "$current_ver" ] && version_ge "$current_ver" "$NODE_REQUIRED_VERSION"; then
         write_info "Node.js 已满足要求: v$current_ver (≥ v$NODE_REQUIRED_VERSION)"
         return 0

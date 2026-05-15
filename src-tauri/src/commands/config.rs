@@ -6342,6 +6342,24 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
     use std::process::Stdio;
     use tauri::Emitter;
 
+    let _ = app.emit("upgrade-log", "正在检查 Node.js 是否已安装...");
+
+    // 先检测是否已安装，避免重复安装
+    let enhanced = super::enhanced_path();
+    if let Some(node_path) = find_node_path(&enhanced) {
+        let mut cmd = Command::new(&node_path);
+        cmd.arg("--version");
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000);
+        if let Ok(o) = cmd.output() {
+            if o.status.success() {
+                let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                let _ = app.emit("upgrade-log", format!("✅ Node.js 已安装 (v{ver}), 跳过安装"));
+                return Ok(format!("Node.js 已安装 (v{ver})"));
+            }
+        }
+    }
+
     let _ = app.emit("upgrade-log", "正在尝试自动安装 Node.js...");
 
     #[cfg(target_os = "windows")]

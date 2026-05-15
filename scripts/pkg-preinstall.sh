@@ -223,6 +223,15 @@ ensure_node() {
     local current_ver
     current_ver="$(get_installed_node_version)"
 
+    # 兜底：即使路径扫描失败，也尝试直接调用 node --version
+    # 覆盖通过 PATH 能找到 node 但 fallback 路径未包含的情况
+    if [ -z "$current_ver" ]; then
+        current_ver="$(node --version 2>/dev/null | tr -d 'v\r\n' || true)"
+        if [ -n "$current_ver" ]; then
+            write_info "通过 node --version 检测到 Node.js: v$current_ver"
+        fi
+    fi
+
     if [ -n "$current_ver" ] && version_ge "$current_ver" "$NODE_REQUIRED_VERSION"; then
         write_ok "Node.js 已满足要求: v$current_ver (≥ v$NODE_REQUIRED_VERSION)"
         return 0
