@@ -1,9 +1,9 @@
 {
-  "version": "0.1.3",
+  "version": "0.1.5",
   "minAppVersion": "0.9.0",
-  "hash": "sha256:a04fa16a66b85006cc11e3e2fb40c8a5c477dd31225fb2117a570cda3b0bb29a",
-  "url": "https://github.com/2217498026/clawtest/releases/download/v0.1.3/web-0.1.3.zip",
-  "size": 4349724,
+  "hash": "sha256:cf890a95a964463d7b1df8101fe082d8b21bd630f4aa60893a6b11510b9cac47",
+  "url": "https://github.com/2217498026/clawtest/releases/download/v0.1.5/web-0.1.5.zip",
+  "size": 4349704,
   "changelog": "",
-  "releasedAt": "2026-05-14T23:27:13Z"
+  "releasedAt": "2026-05-15T00:08:36Z"
 }
