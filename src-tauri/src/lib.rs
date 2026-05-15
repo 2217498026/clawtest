@@ -129,6 +129,18 @@ pub fn run() {
                 eprintln!("[ClawPanel] 托盘初始化失败（非致命）: {e}");
             }
 
+            // 关闭窗口时最小化到托盘，不退出应用
+            if let Some(window) = app.get_webview_window("main") {
+                let win = window.clone();
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        eprintln!("[window] CloseRequested → prevent_close + hide to tray");
+                        api.prevent_close();
+                        let _ = win.hide();
+                    }
+                });
+            }
+
             // 检查是否以 --hidden 参数启动（自启动时）
             let args: Vec<String> = std::env::args().collect();
             if args.contains(&"--hidden".to_string()) {
@@ -322,8 +334,9 @@ pub fn run() {
             hermes::hermes_memory_write,
         ])
         .on_window_event(|window, event| {
-            // 关闭窗口时最小化到托盘，不退出应用
+            // 关闭窗口时最小化到托盘，不退出应用（builder 级兜底）
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                eprintln!("[window] CloseRequested (builder) → prevent_close + hide");
                 api.prevent_close();
                 let _ = window.hide();
             }
