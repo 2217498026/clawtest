@@ -309,20 +309,54 @@ run_install_openclaw() {
         # 确保 PATH 中包含新安装的 node/npm
         local updated_path="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/opt/node@24/bin:/usr/local/opt/node@24/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
+        # ⚠️ 重要：install-openclaw.sh 位于 installd 创建的 sandbox 目录（/private/tmp/PKInstallSandbox.*/）
+        # 该目录权限为 700 属 root，sudo -u 切换用户后无法访问脚本文件。
+        # 因此先将脚本复制到用户可读的临时位置，再执行。
+        local user_tmp_script
+        user_tmp_script="/tmp/install-openclaw-$$.sh"
+        if cp "$found" "$user_tmp_script" 2>/dev/null; then
+            chmod 755 "$user_tmp_script" 2>/dev/null || true
+            write_info "复制脚本到用户可读位置: $user_tmp_script"
+        else
+            write_warn "复制脚本失败，回退直接执行（可能因权限问题失败）"
+            user_tmp_script="$found"
+        fi
+
         write_info "正在执行 install-openclaw.sh（此过程可能需要数分钟）..."
+
+        # 先清空临时标记文件，用于后续判断是否有输出
+        local user_log_tmp
+        user_log_tmp="$(mktemp -t openclaw-install-output.XXXXXX 2>/dev/null || echo "$LOG_FILE")"
+
         if sudo -u "$CONSOLE_USER" \
             HOME="$CONSOLE_HOME" \
             USER="$CONSOLE_USER" \
             PATH="$updated_path" \
-            bash "$found" --silent >> "$LOG_FILE" 2>&1; then
+            bash "$user_tmp_script" --silent >> "$user_log_tmp" 2>&1; then
             write_ok "install-openclaw.sh 执行成功"
+            # 追加输出到主日志
+            if [ "$user_log_tmp" != "$LOG_FILE" ] && [ -s "$user_log_tmp" ]; then
+                cat "$user_log_tmp" >> "$LOG_FILE" 2>/dev/null || true
+            fi
         else
             local rc=$?
             write_warn "install-openclaw.sh 退出码=$rc（不影响 .pkg 安装）"
+            # 追加输出到主日志
+            if [ "$user_log_tmp" != "$LOG_FILE" ] && [ -s "$user_log_tmp" ]; then
+                cat "$user_log_tmp" >> "$LOG_FILE" 2>/dev/null || true
+            fi
             # 捕获最后 20 行日志以便诊断
-            write_info "--- install-openclaw 最后 20 行日志 ---"
-            tail -20 "$LOG_FILE" | while IFS= read -r line; do write_log "$line"; done
+            write_info "--- install-openclaw 输出（最后 20 行）---"
+            tail -20 "$user_log_tmp" 2>/dev/null | while IFS= read -r line; do write_log "$line"; done
             write_info "---"
+        fi
+
+        # 清理临时文件
+        if [ "$user_tmp_script" != "$found" ]; then
+            rm -f "$user_tmp_script" 2>/dev/null || true
+        fi
+        if [ "$user_log_tmp" != "$LOG_FILE" ]; then
+            rm -f "$user_log_tmp" 2>/dev/null || true
         fi
     else
         write_warn "未找到 sudo，跳过 install-openclaw.sh 执行"
