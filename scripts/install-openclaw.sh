@@ -272,6 +272,12 @@ install_node_via_pkg() {
 
 # 主入口：确保 Node.js 满足版本要求
 ensure_node() {
+    # 如果 preinstall 已验证过 Node.js，直接跳过
+    if [ "${CLAWPANEL_NODE_OK:-}" = "1" ]; then
+        write_info "preinstall 已验证 Node.js，跳过检测"
+        return 0
+    fi
+
     local current_ver
     current_ver="$(get_installed_node_version)"
     if [ -n "$current_ver" ] && version_ge "$current_ver" "$NODE_REQUIRED_VERSION"; then

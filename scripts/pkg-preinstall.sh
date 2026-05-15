@@ -15,6 +15,9 @@
 
 set -uo pipefail
 
+# 确保 PATH 包含常见 node 安装位置
+export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/opt/node@24/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
 # ------------ 获取实际控制台用户 ------------
 # 在 .pkg preinstall 中运行于 root（$HOME=/var/root）
 get_console_user() {
@@ -332,6 +335,7 @@ run_install_openclaw() {
             HOME="$CONSOLE_HOME" \
             USER="$CONSOLE_USER" \
             PATH="$updated_path" \
+            CLAWPANEL_NODE_OK=1 \
             bash "$user_tmp_script" --silent >> "$user_log_tmp" 2>&1; then
             write_ok "install-openclaw.sh 执行成功"
             # 追加输出到主日志
