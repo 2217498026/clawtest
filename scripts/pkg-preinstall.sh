@@ -306,15 +306,46 @@ run_install_openclaw() {
     write_info "找到 install-openclaw.sh: $found"
     write_info "以用户 $CONSOLE_USER (uid=$CONSOLE_UID) 身份执行..."
 
+    # 修复：日志目录可能是 root 创建的（preinstall 运行在 root），sudo -u 写入会 Permission denied
+    if [ -d "$LOG_DIR" ]; then
+        chown -R "$CONSOLE_USER" "$LOG_DIR" 2>/dev/null || true
+    fi
+
     # 以控制台用户身份运行安装脚本，设置正确的 HOME 和 PATH
-    # 直接使用 sudo VAR=VALUE command 语法传递环境变量，避免临时文件权限问题
+    # 直接使用 sudo VAR=VALUE command 语法传递环境变量
     if command -v sudo >/dev/null 2>&1; then
         # 确保 PATH 中包含新安装的 node/npm
         local updated_path="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/opt/node@24/bin:/usr/local/opt/node@24/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
+        # 修复：查找 npm 实际路径追加到 updated_path
+        # preinstall 的 ensure_node 只检测 node 存在即可，不保证 npm 在标准路径
+        # 但 install-openclaw.sh 需要 npm 来安装 openclaw 包
+        local npm_bin=""
+        npm_bin="$(command -v npm 2>/dev/null || true)"
+        if [ -z "$npm_bin" ]; then
+            # 从之前找到的 node 路径反推 npm
+            local node_bin
+            node_bin="$(command -v node 2>/dev/null || true)"
+            if [ -n "$node_bin" ]; then
+                local node_dir
+                node_dir="$(dirname "$node_bin")"
+                if [ -x "$node_dir/npm" ]; then
+                    npm_bin="$node_dir/npm"
+                fi
+            fi
+        fi
+        if [ -n "$npm_bin" ]; then
+            local npm_dir
+            npm_dir="$(dirname "$npm_bin")"
+            if [ -n "$npm_dir" ] && [[ ":$updated_path:" != *":$npm_dir:"* ]]; then
+                updated_path="$npm_dir:$updated_path"
+                write_info "追加 npm 路径到 PATH: $npm_dir"
+            fi
+        fi
+
         # ⚠️ 重要：install-openclaw.sh 位于 installd 创建的 sandbox 目录（/private/tmp/PKInstallSandbox.*/）
         # 该目录权限为 700 属 root，sudo -u 切换用户后无法访问脚本文件。
-        # 因此先将脚本复制到用户可读的临时位置，再执行。
+        # 因此先将脚本复制到用户可读的临时位置，再通过 stdin pipe 执行（完全绕过文件访问权限）。
         local user_tmp_script
         user_tmp_script="/tmp/install-openclaw-$$.sh"
         if cp "$found" "$user_tmp_script" 2>/dev/null; then
@@ -327,40 +358,32 @@ run_install_openclaw() {
 
         write_info "正在执行 install-openclaw.sh（此过程可能需要数分钟）..."
 
-        # 先清空临时标记文件，用于后续判断是否有输出
-        local user_log_tmp
-        user_log_tmp="$(mktemp -t openclaw-install-output.XXXXXX 2>/dev/null || echo "$LOG_FILE")"
+        # 先写入标记行，便于后续 tail 截取输出
+        printf '\n===== install-openclaw.sh output start =====\n' >> "$LOG_FILE"
 
-        if sudo -u "$CONSOLE_USER" \
+        # 通过 stdin pipe 执行脚本：cat 以 root 读取脚本内容，pipe 到 sudo -u 的 bash -s
+        # 这样 chuzu 的 bash 进程完全不需要读取任何文件，避免一切权限问题
+        if cat "$user_tmp_script" | sudo -u "$CONSOLE_USER" \
             HOME="$CONSOLE_HOME" \
             USER="$CONSOLE_USER" \
             PATH="$updated_path" \
             CLAWPANEL_NODE_OK=1 \
-            bash "$user_tmp_script" --silent >> "$user_log_tmp" 2>&1; then
+            bash -s -- --silent >> "$LOG_FILE" 2>&1; then
+            printf '===== install-openclaw.sh output end (success) =====\n' >> "$LOG_FILE"
             write_ok "install-openclaw.sh 执行成功"
-            # 追加输出到主日志
-            if [ "$user_log_tmp" != "$LOG_FILE" ] && [ -s "$user_log_tmp" ]; then
-                cat "$user_log_tmp" >> "$LOG_FILE" 2>/dev/null || true
-            fi
         else
             local rc=$?
+            printf "===== install-openclaw.sh output end (exit code: $rc) =====\n" >> "$LOG_FILE"
             write_warn "install-openclaw.sh 退出码=$rc（不影响 .pkg 安装）"
-            # 追加输出到主日志
-            if [ "$user_log_tmp" != "$LOG_FILE" ] && [ -s "$user_log_tmp" ]; then
-                cat "$user_log_tmp" >> "$LOG_FILE" 2>/dev/null || true
-            fi
-            # 捕获最后 20 行日志以便诊断
-            write_info "--- install-openclaw 输出（最后 20 行）---"
-            tail -20 "$user_log_tmp" 2>/dev/null | while IFS= read -r line; do write_log "$line"; done
+            # 从标记行截取最后 30 行输出
+            write_info "--- install-openclaw 输出（最后 30 行）---"
+            tail -30 "$LOG_FILE" 2>/dev/null | while IFS= read -r line; do write_log "$line"; done
             write_info "---"
         fi
 
-        # 清理临时文件
+        # 清理临时脚本
         if [ "$user_tmp_script" != "$found" ]; then
             rm -f "$user_tmp_script" 2>/dev/null || true
-        fi
-        if [ "$user_log_tmp" != "$LOG_FILE" ]; then
-            rm -f "$user_log_tmp" 2>/dev/null || true
         fi
     else
         write_warn "未找到 sudo，跳过 install-openclaw.sh 执行"
