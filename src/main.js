@@ -325,7 +325,7 @@ async function getPublicIp() {
 
       const response = await fetch(`${CODE_SERVER_URL}/api/Login/GetClientIp`).then(async res => {
         if (!res.ok) throw new Error('ip failed')
-        return (await res.text()).trim()
+        return (await res.text()).replaceAll('"','').trim()
       })
 /*   const result = await Promise.race([response, timeout])
     return result */
