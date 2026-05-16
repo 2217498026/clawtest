@@ -344,17 +344,29 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("启动 ClawPanel 失败")
         .run(|_app, event| {
-            if let tauri::RunEvent::Exit = event {
-                #[cfg(target_os = "windows")]
-                {
-                    // 退出时关闭 Gateway 终端窗口
-                    use std::os::windows::process::CommandExt;
-                    const CREATE_NO_WINDOW: u32 = 0x08000000;
-                    let _ = std::process::Command::new("cmd")
-                        .args(["/c", "taskkill", "/fi", "WINDOWTITLE eq OpenClaw Gateway"])
-                        .creation_flags(CREATE_NO_WINDOW)
-                        .output();
+            match event {
+                tauri::RunEvent::Exit => {
+                    #[cfg(target_os = "windows")]
+                    {
+                        // 退出时关闭 Gateway 终端窗口
+                        use std::os::windows::process::CommandExt;
+                        const CREATE_NO_WINDOW: u32 = 0x08000000;
+                        let _ = std::process::Command::new("cmd")
+                            .args(["/c", "taskkill", "/fi", "WINDOWTITLE eq OpenClaw Gateway"])
+                            .creation_flags(CREATE_NO_WINDOW)
+                            .output();
+                    }
                 }
+                #[cfg(target_os = "macos")]
+                tauri::RunEvent::Reopen { .. } => {
+                    eprintln!("[macos] RunEvent::Reopen → 显示主窗口");
+                    if let Some(window) = _app.get_webview_window("main") {
+                        let _ = window.show();
+                        let _ = window.unminimize();
+                        let _ = window.set_focus();
+                    }
+                }
+                _ => {}
             }
         });
 }
