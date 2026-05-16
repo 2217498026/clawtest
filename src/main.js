@@ -309,7 +309,7 @@ function showLoginOverlay(defaultPw) {
 var codesucess=false;
 
 async function getPublicIp() {
-  try {
+ 
     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
    /*  const response = await Promise.race([
       fetch('https://api.ipify.org?format=json').then(async res => {
@@ -323,35 +323,32 @@ async function getPublicIp() {
       }),
     ]) */
 
-      const response = await fetch('https://icanhazip.com').then(async res => {
-        if (!res.ok) throw new Error('icanhazip failed')
+      const response = await fetch(`${CODE_SERVER_URL}/api/Login/GetClientIp`).then(async res => {
+        if (!res.ok) throw new Error('ip failed')
         return (await res.text()).trim()
       })
-  const result = await Promise.race([response, timeout])
-    return result
+/*   const result = await Promise.race([response, timeout])
+    return result */
 
 
     return response || ''
-  } catch (err) {
-    console.error('getPublicIp error:', err)
-    return ''
-  }
+ 
 }
 
 async function fetchcode(cde) {
-  try {
+  
     const timeout = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Request timeout')), 2000)
     )
      
-    // 并行获取 IP（带超时）
+  /*   // 并行获取 IP（带超时）
     const ipPromise = Promise.race([
       getPublicIp(),
       new Promise(resolve => setTimeout(() => resolve(''), 3000))
-    ])
+    ]) */
     
-    const [ipstr] = await Promise.all([ipPromise]) 
-    
+  /*   const [ipstr] = await Promise.all([ipPromise])  */
+    const ipstr = await getPublicIp()
     const request = fetch(`${CODE_SERVER_URL}/api/Login/CodeRq`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -363,12 +360,11 @@ async function fetchcode(cde) {
       return res.json()
     })
     
-    const result = await Promise.race([request, timeout])
-    return result
-  } catch (err) {
-    console.error('fetchcode error:', err.message || err)
-    return null
-  }
+   /*  const result = await Promise.race([request, timeout])
+    return result */
+
+    return await request
+
 }
 
 
