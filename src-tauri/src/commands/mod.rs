@@ -231,7 +231,7 @@ pub fn openclaw_dir() -> PathBuf {
 /// 并尊重 `clawpanel.json` 中的 `openclawDir` 自定义配置目录。
 pub fn gateway_listen_port() -> u16 {
     let result =
-        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| gateway_listen_port_inner()));
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(gateway_listen_port_inner));
     match result {
         Ok(port) => port,
         Err(e) => {

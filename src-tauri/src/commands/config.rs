@@ -2273,7 +2273,7 @@ pub async fn get_version_info() -> Result<VersionInfo, String> {
     let (current, cli_path, source_handle) = futures_util::join!(
         get_local_version(),
         async { crate::utils::resolve_openclaw_cli_path() },
-        tokio::task::spawn_blocking(|| detect_installed_source()),
+        tokio::task::spawn_blocking(detect_installed_source),
     );
     let mut source = source_handle.unwrap_or_else(|_| "unknown".to_string());
 
@@ -3105,7 +3105,7 @@ async fn try_standalone_install(
                 let pct = 15 + ((downloaded as f64 / total_bytes as f64) * 55.0) as u32;
                 if pct > last_progress {
                     // 每 5% 输出一次文字进度
-                    if pct / 5 > last_progress / 5 {
+                    if pct.checked_div(5).unwrap_or(0) > last_progress.checked_div(5).unwrap_or(0) {
                         let dl_mb = downloaded as f64 / 1_048_576.0;
                         let total_mb = total_bytes as f64 / 1_048_576.0;
                         let real_pct = (downloaded as f64 / total_bytes as f64 * 100.0) as u32;
@@ -6077,9 +6077,6 @@ pub fn invalidate_path_cache() -> Result<(), String> {
 
 /// 离线安装 Node.js（通过下载 MSI 安装包）
 /// 用于 winget 不可用时的 fallback
-
-/// 离线安装 Node.js（通过下载 MSI 安装包）
-/// 用于 winget 不可用时的 fallback
 async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, String> {
     // ---------- 1. 准备 HTTP 客户端 ----------
     let client = crate::commands::build_http_client(std::time::Duration::from_secs(60), None)
@@ -6140,16 +6137,16 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
 
             // 每 10% 报告一次进度（避免遗漏）
             if total_size > 0 {
-                let current_10pct = (downloaded * 10) / total_size;
+                let current_10pct = downloaded.checked_mul(10).and_then(|v| v.checked_div(total_size)).unwrap_or(0);
                 if current_10pct > last_reported_10pct {
-                    let percent = (downloaded * 100) / total_size;
+                    let percent = (downloaded.checked_mul(100).and_then(|v| v.checked_div(total_size)).unwrap_or(0)) as u32;
                     let _ = app.emit(
                         "upgrade-log",
                         format!(
                             "⏳ 下载进度: {}% ({}MB / {}MB)",
                             percent,
-                            downloaded / 1048576,
-                            total_size / 1048576
+                        downloaded.checked_div(1048576).unwrap_or(0),
+                        total_size.checked_div(1048576).unwrap_or(0)
                         ),
                     );
                     last_reported_10pct = current_10pct;
@@ -6212,7 +6209,7 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
         }
         let status = Command::new("msiexec.exe")
             .arg("/i")
-            .arg(&msi_str)
+            .arg(msi_str)
             .arg("/qn")
             .arg("/norestart")
             .status();
@@ -6254,7 +6251,7 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
     let _ = app.emit("upgrade-log", "⚠️ /qn 静默安装失败，尝试 /quiet 模式...");
     let status_quiet = Command::new("msiexec.exe")
         .arg("/i")
-        .arg(&msi_str)
+        .arg(msi_str)
         .arg("/quiet")
         .arg("/norestart")
         .status();
@@ -6280,7 +6277,7 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
     let _ = app.emit("upgrade-log", "⚠️ 静默安装均失败，尝试带进度条安装...");
     let status_passive = Command::new("msiexec.exe")
         .arg("/i")
-        .arg(&msi_str)
+        .arg(msi_str)
         .arg("/passive") // 显示进度条，无取消按钮，不需交互
         .arg("/norestart")
         .status();
@@ -6309,7 +6306,7 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
         "⏳ 请在弹出的安装窗口中完成 Node.js 安装后关闭窗口（程序会等待您完成安装）",
     );
     // 使用 .status() 阻塞等待 msiexec 安装窗口关闭，确保前端不会过早显示"修复完成"
-    let msiexec_status = Command::new("msiexec.exe").arg("/i").arg(&msi_str).status();
+    let msiexec_status = Command::new("msiexec.exe").arg("/i").arg(msi_str).status();
 
     match msiexec_status {
         Ok(s) if s.success() => {
