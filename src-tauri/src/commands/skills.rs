@@ -874,8 +874,7 @@ fn detect_missing_dependencies(deps: &[String], skill_path: &std::path::Path) ->
 pub async fn download_and_extract_rar(url: String, target_dir: String) -> Result<Value, String> {
     // 1. 创建临时文件路径
     let tmp_dir = std::env::temp_dir().join("clawpanel_rar");
-    std::fs::create_dir_all(&tmp_dir)
-        .map_err(|e| format!("创建临时目录失败: {e}"))?;
+    std::fs::create_dir_all(&tmp_dir).map_err(|e| format!("创建临时目录失败: {e}"))?;
     let tmp_path = tmp_dir.join("opclskill.rar");
 
     // 2. 下载 RAR 文件（流式写入避免大文件 OOM）
@@ -902,12 +901,14 @@ pub async fn download_and_extract_rar(url: String, target_dir: String) -> Result
         .await
         .map_err(|e| format!("写入临时文件失败: {e}"))?;
 
-    eprintln!("[download_and_extract_rar] 下载完成, 大小: {} bytes", bytes.len());
+    eprintln!(
+        "[download_and_extract_rar] 下载完成, 大小: {} bytes",
+        bytes.len()
+    );
 
     // 3. 确保目标目录存在（不清理旧目录，解压时自动覆盖同名文件）
     let target = std::path::PathBuf::from(&target_dir);
-    std::fs::create_dir_all(&target)
-        .map_err(|e| format!("创建目标目录失败: {e}"))?;
+    std::fs::create_dir_all(&target).map_err(|e| format!("创建目标目录失败: {e}"))?;
 
     // 4. 使用 unrar crate 解压 RAR
     eprintln!("[download_and_extract_rar] 开始解压到: {}", &target_dir);

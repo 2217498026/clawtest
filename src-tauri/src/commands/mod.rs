@@ -230,9 +230,8 @@ pub fn openclaw_dir() -> PathBuf {
 /// 与面板「Gateway 配置」、服务状态检测（netstat / TCP / launchctl 兜底）共用同一来源，
 /// 并尊重 `clawpanel.json` 中的 `openclawDir` 自定义配置目录。
 pub fn gateway_listen_port() -> u16 {
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        gateway_listen_port_inner()
-    }));
+    let result =
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| gateway_listen_port_inner()));
     match result {
         Ok(port) => port,
         Err(e) => {
@@ -243,7 +242,9 @@ pub fn gateway_listen_port() -> u16 {
             } else {
                 format!("{:?}", e)
             };
-            panel_log(&format!("[gateway_port] PANIC 被捕获: {msg}, 返回默认端口 18789"));
+            panel_log(&format!(
+                "[gateway_port] PANIC 被捕获: {msg}, 返回默认端口 18789"
+            ));
             18789
         }
     }
@@ -262,13 +263,19 @@ fn gateway_listen_port_inner() -> u16 {
                 cache.0, elapsed
             ));
             if elapsed < Duration::from_secs(5) {
-                panel_log(&format!("[gateway_port] 缓存有效 (<5s), 直接返回 {}", cache.0));
+                panel_log(&format!(
+                    "[gateway_port] 缓存有效 (<5s), 直接返回 {}",
+                    cache.0
+                ));
                 return cache.0;
             }
             panel_log("[gateway_port] 缓存已过期 (>=5s), 需要重新读取配置文件");
         }
         Err(e) => {
-            panel_log(&format!("[gateway_port] 缓存锁获取失败 (mutex poisoned): {:?}", e));
+            panel_log(&format!(
+                "[gateway_port] 缓存锁获取失败 (mutex poisoned): {:?}",
+                e
+            ));
         }
     }
 
@@ -283,7 +290,10 @@ fn gateway_listen_port_inner() -> u16 {
             panel_log(&format!("[gateway_port] 缓存更新成功, 返回 {}", port));
         }
         Err(e) => {
-            panel_log(&format!("[gateway_port] 缓存更新失败 (mutex poisoned): {:?}", e));
+            panel_log(&format!(
+                "[gateway_port] 缓存更新失败 (mutex poisoned): {:?}",
+                e
+            ));
         }
     }
 

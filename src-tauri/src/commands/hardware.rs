@@ -45,7 +45,11 @@ fn get_motherboard_serial_windows() -> String {
     if let Ok(output) = cmd.output() {
         if output.status.success() {
             let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            if !text.is_empty() && text != "To be filled by O.E.M." && text != "Not Available" && text != "Default string" {
+            if !text.is_empty()
+                && text != "To be filled by O.E.M."
+                && text != "Not Available"
+                && text != "Default string"
+            {
                 // 过滤 CLIXML 残余
                 let clean = text
                     .lines()
@@ -107,7 +111,11 @@ fn get_motherboard_serial_linux() -> String {
     }
 
     // 方法2: dmidecode
-    if let Ok(output) = Command::new("dmidecode").arg("-s").arg("system-serial-number").output() {
+    if let Ok(output) = Command::new("dmidecode")
+        .arg("-s")
+        .arg("system-serial-number")
+        .output()
+    {
         if output.status.success() {
             let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !text.is_empty()
@@ -147,10 +155,7 @@ fn get_motherboard_serial_macos() -> String {
     }
 
     // 方法2: ioreg
-    if let Ok(output) = Command::new("ioreg")
-        .args(["-l"])
-        .output()
-    {
+    if let Ok(output) = Command::new("ioreg").args(["-l"]).output() {
         if output.status.success() {
             let text = String::from_utf8_lossy(&output.stdout);
             for line in text.lines() {

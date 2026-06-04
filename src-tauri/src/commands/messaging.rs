@@ -1078,12 +1078,10 @@ pub async fn remove_messaging_platform(
     match &account_id {
         Some(acct) if !acct.is_empty() => {
             // 多账号模式：仅删除指定账号；若账号删完则移除整个平台条目
-            let accounts_empty = if let Some(channel) = cfg
-                .get_mut("channels")
-                .and_then(|c| c.get_mut(storage_key))
+            let accounts_empty = if let Some(channel) =
+                cfg.get_mut("channels").and_then(|c| c.get_mut(storage_key))
             {
-                if let Some(accounts) =
-                    channel.get_mut("accounts").and_then(|a| a.as_object_mut())
+                if let Some(accounts) = channel.get_mut("accounts").and_then(|a| a.as_object_mut())
                 {
                     accounts.remove(acct.as_str());
                     accounts.is_empty()
@@ -1127,7 +1125,7 @@ pub async fn remove_messaging_platform(
         });
     }
     /* eprintln!("[messaging] cfg = {}", serde_json::to_string_pretty(&cfg).unwrap_or_default());
- */
+     */
     super::config::save_openclaw_json(&cfg)?;
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {

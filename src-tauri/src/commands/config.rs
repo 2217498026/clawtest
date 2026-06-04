@@ -1,16 +1,16 @@
+use crate::models::types::VersionInfo;
 use crate::utils::openclaw_command;
+use futures_util::StreamExt;
 /// 配置读写命令
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
+use std::io::Write;
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use std::process::Command;
-use futures_util::StreamExt;
-use crate::models::types::VersionInfo;
-use std::io::Write;
 use tauri::Emitter;
 struct GuardianPause {
     reason: &'static str,
@@ -1356,10 +1356,10 @@ fn merge_configs_preserving_fields(existing: &Value, new: &Value) -> Value {
 
     // 需要完整替换而非合并的节点（删除操作必须生效）
     const FULL_REPLACE_KEYS: &[&str] = &[
-        "channels",    // 平台配置：删除平台后不应保留旧值
-        "bindings",    // Agent 绑定：删除后不应保留旧绑定
-        "agents",      // Agent 列表
-        "models",      // 模型配置
+        "channels", // 平台配置：删除平台后不应保留旧值
+        "bindings", // Agent 绑定：删除后不应保留旧绑定
+        "agents",   // Agent 列表
+        "models",   // 模型配置
     ];
 
     match (existing, new) {
@@ -4674,7 +4674,10 @@ pub fn scan_node_paths(app: tauri::AppHandle) -> Result<Value, String> {
             if let Ok(o) = cmd.output() {
                 if o.status.success() {
                     let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                    let _ = app.emit("fix-log", format!("📍 Found Node.js: {} ({})", node_path_str, ver));
+                    let _ = app.emit(
+                        "fix-log",
+                        format!("📍 Found Node.js: {} ({})", node_path_str, ver),
+                    );
                     let mut entry = serde_json::Map::new();
                     entry.insert("path".into(), Value::String(node_path_str));
                     entry.insert("version".into(), Value::String(ver));
@@ -5055,10 +5058,7 @@ pub async fn doctor_fix(app: tauri::AppHandle) -> Result<Value, String> {
         };
 
         // 带超时等待 stdout 读完
-        let _ = tokio::time::timeout(
-            std::time::Duration::from_secs(90),
-            read_fut,
-        ).await;
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(90), read_fut).await;
 
         if let Some(h) = stderr_handle {
             if let Ok(s) = h.await {
@@ -5068,13 +5068,10 @@ pub async fn doctor_fix(app: tauri::AppHandle) -> Result<Value, String> {
     }
 
     // 等待进程退出
-    let status = tokio::time::timeout(
-        std::time::Duration::from_secs(10),
-        child.wait(),
-    )
-    .await
-    .map_err(|_| "doctor --fix 执行超时 (90s)".to_string())?
-    .map_err(|e| format!("等待进程退出失败: {e}"))?;
+    let status = tokio::time::timeout(std::time::Duration::from_secs(10), child.wait())
+        .await
+        .map_err(|_| "doctor --fix 执行超时 (90s)".to_string())?
+        .map_err(|e| format!("等待进程退出失败: {e}"))?;
 
     let success = status.success();
     Ok(json!({
@@ -6078,12 +6075,8 @@ pub fn invalidate_path_cache() -> Result<(), String> {
     Ok(())
 }
 
-
-
-
 /// 离线安装 Node.js（通过下载 MSI 安装包）
 /// 用于 winget 不可用时的 fallback
-
 
 /// 离线安装 Node.js（通过下载 MSI 安装包）
 /// 用于 winget 不可用时的 fallback
@@ -6100,7 +6093,10 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
         version_str, msi_filename
     );
 
-    let _ = app.emit("upgrade-log", format!("📥 下载 Node.js {} (淘宝镜像)", version_str));
+    let _ = app.emit(
+        "upgrade-log",
+        format!("📥 下载 Node.js {} (淘宝镜像)", version_str),
+    );
     let _ = app.emit("upgrade-log", format!("🔗 下载地址: {}", download_url));
 
     // ---------- 2. 创建临时目录 ----------
@@ -6108,8 +6104,7 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
     if temp_dir.exists() {
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
-    std::fs::create_dir_all(&temp_dir)
-        .map_err(|e| format!("创建临时目录失败: {e}"))?;
+    std::fs::create_dir_all(&temp_dir).map_err(|e| format!("创建临时目录失败: {e}"))?;
     let msi_path = temp_dir.join(&msi_filename);
 
     // ---------- 3. 下载 MSI（带进度和完整校验）----------
@@ -6130,11 +6125,11 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
     let total_size = resp.content_length().unwrap_or(0);
     let mut downloaded: u64 = 0;
     let mut last_reported_10pct = 0u64; // 记录上次报告的10%区间
-    // 使用代码块确保文件句柄在 msiexec 调用前完全释放
+                                        // 使用代码块确保文件句柄在 msiexec 调用前完全释放
     let msi_path_clone = msi_path.clone();
     let file_exists = {
-        let mut file = std::fs::File::create(&msi_path)
-            .map_err(|e| format!("创建文件失败: {e}"))?;
+        let mut file =
+            std::fs::File::create(&msi_path).map_err(|e| format!("创建文件失败: {e}"))?;
 
         let mut stream = resp.bytes_stream();
         while let Some(chunk) = stream.next().await {
@@ -6148,7 +6143,15 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
                 let current_10pct = (downloaded * 10) / total_size;
                 if current_10pct > last_reported_10pct {
                     let percent = (downloaded * 100) / total_size;
-                    let _ = app.emit("upgrade-log", format!("⏳ 下载进度: {}% ({}MB / {}MB)", percent, downloaded / 1048576, total_size / 1048576));
+                    let _ = app.emit(
+                        "upgrade-log",
+                        format!(
+                            "⏳ 下载进度: {}% ({}MB / {}MB)",
+                            percent,
+                            downloaded / 1048576,
+                            total_size / 1048576
+                        ),
+                    );
                     last_reported_10pct = current_10pct;
                 }
             }
@@ -6167,8 +6170,8 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
         return Err("下载文件未创建，请重试或手动安装".to_string());
     }
 
-    let metadata = std::fs::metadata(&msi_path_clone)
-        .map_err(|e| format!("获取文件信息失败: {e}"))?;
+    let metadata =
+        std::fs::metadata(&msi_path_clone).map_err(|e| format!("获取文件信息失败: {e}"))?;
     let actual_size = metadata.len();
 
     if total_size > 0 && actual_size != total_size {
@@ -6179,9 +6182,13 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
         ));
     }
 
-    if actual_size < 20_000_000 { // 小于 20MB 明显异常
+    if actual_size < 20_000_000 {
+        // 小于 20MB 明显异常
         let _ = std::fs::remove_dir_all(&temp_dir);
-        return Err(format!("下载文件过小 ({} 字节)，可能已损坏。请手动安装: {}", actual_size, download_url));
+        return Err(format!(
+            "下载文件过小 ({} 字节)，可能已损坏。请手动安装: {}",
+            actual_size, download_url
+        ));
     }
 
     // ---------- 5. 开始安装（多级递进策略）----------
@@ -6218,10 +6225,21 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
             Ok(s) => {
                 let code = s.code().unwrap_or(-1);
                 let diag = msi_exit_code_diag(code);
-                let _ = app.emit("upgrade-log", format!("⚠️ 静默安装退出码: {} - {} (尝试 {}/2)", code, diag, attempt + 1));
+                let _ = app.emit(
+                    "upgrade-log",
+                    format!(
+                        "⚠️ 静默安装退出码: {} - {} (尝试 {}/2)",
+                        code,
+                        diag,
+                        attempt + 1
+                    ),
+                );
             }
             Err(e) => {
-                let _ = app.emit("upgrade-log", format!("❌ 调用 msiexec 失败: {} (可能需要管理员权限)", e));
+                let _ = app.emit(
+                    "upgrade-log",
+                    format!("❌ 调用 msiexec 失败: {} (可能需要管理员权限)", e),
+                );
             }
         }
     }
@@ -6244,12 +6262,18 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
     if let Ok(s) = status_quiet {
         if s.success() {
             let _ = std::fs::remove_dir_all(&temp_dir);
-            let _ = app.emit("upgrade-log", "✅ Node.js 安装成功（/quiet 模式）！重启应用后生效。");
+            let _ = app.emit(
+                "upgrade-log",
+                "✅ Node.js 安装成功（/quiet 模式）！重启应用后生效。",
+            );
             return Ok("Node.js 已成功安装，请重启应用".to_string());
         }
         let code = s.code().unwrap_or(-1);
         let diag = msi_exit_code_diag(code);
-        let _ = app.emit("upgrade-log", format!("⚠️ /quiet 安装退出码: {} - {}", code, diag));
+        let _ = app.emit(
+            "upgrade-log",
+            format!("⚠️ /quiet 安装退出码: {} - {}", code, diag),
+        );
     }
 
     // --- 5.3 尝试被动安装（显示进度条，但无需用户点击） ---
@@ -6257,29 +6281,35 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
     let status_passive = Command::new("msiexec.exe")
         .arg("/i")
         .arg(&msi_str)
-        .arg("/passive")   // 显示进度条，无取消按钮，不需交互
+        .arg("/passive") // 显示进度条，无取消按钮，不需交互
         .arg("/norestart")
         .status();
 
     if let Ok(s) = status_passive {
         if s.success() {
             let _ = std::fs::remove_dir_all(&temp_dir);
-            let _ = app.emit("upgrade-log", "✅ Node.js 安装成功（被动模式）！重启应用后生效。");
+            let _ = app.emit(
+                "upgrade-log",
+                "✅ Node.js 安装成功（被动模式）！重启应用后生效。",
+            );
             return Ok("Node.js 已成功安装，请重启应用".to_string());
         }
         let code = s.code().unwrap_or(-1);
         let diag = msi_exit_code_diag(code);
-        let _ = app.emit("upgrade-log", format!("⚠️ 被动安装退出码: {} - {}", code, diag));
+        let _ = app.emit(
+            "upgrade-log",
+            format!("⚠️ 被动安装退出码: {} - {}", code, diag),
+        );
     }
 
     // --- 5.4 最终降级：打开交互式安装向导（需用户手动完成）---
     let _ = app.emit("upgrade-log", "💡 自动安装失败，正在打开交互式安装向导...");
-    let _ = app.emit("upgrade-log", "⏳ 请在弹出的安装窗口中完成 Node.js 安装后关闭窗口（程序会等待您完成安装）");
+    let _ = app.emit(
+        "upgrade-log",
+        "⏳ 请在弹出的安装窗口中完成 Node.js 安装后关闭窗口（程序会等待您完成安装）",
+    );
     // 使用 .status() 阻塞等待 msiexec 安装窗口关闭，确保前端不会过早显示"修复完成"
-    let msiexec_status = Command::new("msiexec.exe")
-        .arg("/i")
-        .arg(&msi_str)
-        .status();
+    let msiexec_status = Command::new("msiexec.exe").arg("/i").arg(&msi_str).status();
 
     match msiexec_status {
         Ok(s) if s.success() => {
@@ -6290,13 +6320,28 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
         Ok(s) => {
             let code = s.code().unwrap_or(-1);
             let diag = msi_exit_code_diag(code);
-            let _ = app.emit("upgrade-log", format!("⚠️ 交互式安装退出码: {} - {}", code, diag));
-            let _ = app.emit("upgrade-log", format!("💡 如持续失败，请手动下载安装: {}", download_url));
-            Err(format!("安装退出码 {} ({})。请手动下载安装: {}", code, diag, download_url))
+            let _ = app.emit(
+                "upgrade-log",
+                format!("⚠️ 交互式安装退出码: {} - {}", code, diag),
+            );
+            let _ = app.emit(
+                "upgrade-log",
+                format!("💡 如持续失败，请手动下载安装: {}", download_url),
+            );
+            Err(format!(
+                "安装退出码 {} ({})。请手动下载安装: {}",
+                code, diag, download_url
+            ))
         }
         Err(e) => {
-            let _ = app.emit("upgrade-log", format!("❌ 无法启动 msiexec: {}。请手动安装: {}", e, download_url));
-            Err(format!("无法启动安装程序: {}。请手动下载安装: {}", e, download_url))
+            let _ = app.emit(
+                "upgrade-log",
+                format!("❌ 无法启动 msiexec: {}。请手动安装: {}", e, download_url),
+            );
+            Err(format!(
+                "无法启动安装程序: {}。请手动下载安装: {}",
+                e, download_url
+            ))
         }
     }
 }
@@ -6334,7 +6379,6 @@ fn msi_exit_code_diag(code: i32) -> &'static str {
     }
 }
 
-
 /// 自动安装 Node.js（Windows: winget / macOS: brew / Linux: apt/yum/dnf/pacman）
 /// 安装进度通过 "upgrade-log" 事件流式推送
 #[tauri::command]
@@ -6354,7 +6398,10 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
         if let Ok(o) = cmd.output() {
             if o.status.success() {
                 let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                let _ = app.emit("upgrade-log", format!("✅ Node.js 已安装 (v{ver}), 跳过安装"));
+                let _ = app.emit(
+                    "upgrade-log",
+                    format!("✅ Node.js 已安装 (v{ver}), 跳过安装"),
+                );
                 return Ok(format!("Node.js 已安装 (v{ver})"));
             }
         }
@@ -6366,7 +6413,7 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
     {
         use std::io::{BufRead, BufReader};
         let _ = app.emit("upgrade-log", "尝试使用 winget 安装 Node.js LTS...");
-        
+
         // 尝试启动 winget，如果失败则跳过直接尝试离线安装
         let winget_result = Command::new("winget")
             .args([
@@ -6383,7 +6430,7 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn();
-            
+
         match winget_result {
             Ok(mut child) => {
                 let stderr = child.stderr.take();
@@ -6415,7 +6462,7 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
                 let _ = app.emit("upgrade-log", format!("⚠️ winget 不可用: {e}"));
             }
         }
-        
+
         // winget 不可用或失败，尝试离线安装（下载 MSI 安装包）
         let _ = app.emit("upgrade-log", "⚠️ winget 安装失败，尝试离线安装...");
         return offline_install_node_msi(&app).await;
@@ -6455,14 +6502,14 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
                 }
             }
             let _ = handle.join();
-            let status = child.wait().map_err(|e| format!("等待 brew 完成失败: {e}"))?;
+            let status = child
+                .wait()
+                .map_err(|e| format!("等待 brew 完成失败: {e}"))?;
             if status.success() {
                 let _ = app.emit("upgrade-log", "Node.js 安装成功！重启应用后生效。");
                 return Ok("Node.js 已通过 brew 安装，请重启应用".to_string());
             }
-            return Err(
-                "brew 安装 Node.js 失败，请手动下载安装: https://nodejs.org".to_string(),
-            );
+            return Err("brew 安装 Node.js 失败，请手动下载安装: https://nodejs.org".to_string());
         }
         return Err(
             "未找到 Homebrew，请先安装 brew (https://brew.sh) 或手动安装 Node.js: https://nodejs.org".to_string(),
@@ -6501,9 +6548,7 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
         {
             "pacman"
         } else {
-            return Err(
-                "未找到包管理器，请手动安装 Node.js: https://nodejs.org".to_string(),
-            );
+            return Err("未找到包管理器，请手动安装 Node.js: https://nodejs.org".to_string());
         };
 
         let (cmd_name, args): (&str, Vec<&str>) = match pkg_mgr {
@@ -6561,12 +6606,24 @@ pub async fn auto_install_node(app: tauri::AppHandle) -> Result<String, String> 
 #[allow(dead_code)]
 pub fn is_node_installed() -> bool {
     let result = check_node().ok();
-    result.map(|r| r.get("installed").and_then(|v| v.as_bool()).unwrap_or(false)).unwrap_or(false)
+    result
+        .map(|r| {
+            r.get("installed")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+        })
+        .unwrap_or(false)
 }
 
 /// 检查 OpenClaw CLI 是否已安装（同步版本）
 #[allow(dead_code)]
 pub fn is_openclaw_installed() -> bool {
     let result = check_openclaw_at_path(std::env::var("PATH").unwrap_or_default()).ok();
-    result.map(|r| r.get("installed").and_then(|v| v.as_bool()).unwrap_or(false)).unwrap_or(false)
+    result
+        .map(|r| {
+            r.get("installed")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+        })
+        .unwrap_or(false)
 }

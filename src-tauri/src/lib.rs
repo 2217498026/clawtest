@@ -16,10 +16,10 @@ fn get_log_dir() -> std::path::PathBuf {
 fn init_logging() {
     let log_dir = get_log_dir();
     let _ = std::fs::create_dir_all(&log_dir);
-    
+
     // 设置 panic hook 捕获崩溃日志
     std::panic::set_hook(Box::new(|panic_info| {
-        let log_dir = get_log_dir();  // 在闭包内部重新获取
+        let log_dir = get_log_dir(); // 在闭包内部重新获取
         let log_file = log_dir.join("crash.log");
         let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
         let msg = format!(
@@ -46,15 +46,17 @@ fn log_startup() {
     let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
     let args: Vec<String> = std::env::args().collect();
     let version = option_env!("CARGO_PKG_VERSION").unwrap_or("unknown");
-    
+
     let msg = format!(
         "[{}] INFO: ClawPanel v{} starting\n  Args: {:?}\n  CWD: {:?}\n\n",
         timestamp,
         version,
         args,
-        std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_else(|_| "unknown".to_string())
+        std::env::current_dir()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|_| "unknown".to_string())
     );
-    
+
     let _ = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -63,22 +65,22 @@ fn log_startup() {
             use std::io::Write;
             f.write_all(msg.as_bytes())
         });
-    
+
     println!("{}", msg.trim());
 }
 
 pub fn run() {
     init_logging();
     log_startup();
-    
+
     let hot_update_dir = commands::openclaw_dir()
         .join("clawpanel")
         .join("web-update");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_shell::init())       
+        .plugin(tauri_plugin_shell::init())
         .register_uri_scheme_protocol("tauri", move |ctx, request| {
-             let uri_path = request.uri().path();
+            let uri_path = request.uri().path();
             let path = if uri_path == "/" || uri_path.is_empty() {
                 "index.html"
             } else {
@@ -116,13 +118,12 @@ pub fn run() {
                     .body(b"Not Found".to_vec())
                     .unwrap()
             }
- 
-
         })
         .setup(|app| {
-           std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 service::start_backend_guardian(app.handle().clone());
-            })).unwrap_or_else(|e| {
+            }))
+            .unwrap_or_else(|e| {
                 eprintln!("[ClawPanel] 后端守护启动失败（非致命）: {:?}", e);
             });
             if let Err(e) = tray::setup_tray(app.handle()) {
@@ -148,7 +149,7 @@ pub fn run() {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.hide();
                 }
-            } 
+            }
 
             Ok(())
         })
@@ -372,6 +373,3 @@ pub fn run() {
             }
         });
 }
-
-
-

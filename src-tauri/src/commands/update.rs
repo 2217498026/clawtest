@@ -36,9 +36,6 @@ pub async fn check_frontend_update() -> Result<Value, String> {
         .unwrap_or("")
         .to_string();
 
-
-
-
     // 优先读取已热更新的版本，避免 macOS/Linux 用户安装旧包后永远提示有更新
     let current = {
         let version_file = update_dir().join(".version");

@@ -510,7 +510,10 @@ fn guardian_snapshot() -> GuardianStatus {
     let state = match guardian_state().lock() {
         Ok(s) => s,
         Err(e) => {
-            guardian_log(&format!("guardian_snapshot: 获取状态锁失败 (poisoned): {:?}", e));
+            guardian_log(&format!(
+                "guardian_snapshot: 获取状态锁失败 (poisoned): {:?}",
+                e
+            ));
             return GuardianStatus {
                 backend_managed: true,
                 paused: false,
@@ -533,7 +536,10 @@ pub(crate) fn guardian_mark_manual_stop() {
     let mut state = match guardian_state().lock() {
         Ok(s) => s,
         Err(e) => {
-            guardian_log(&format!("guardian_mark_manual_stop: 获取状态锁失败 (poisoned): {:?}", e));
+            guardian_log(&format!(
+                "guardian_mark_manual_stop: 获取状态锁失败 (poisoned): {:?}",
+                e
+            ));
             return;
         }
     };
@@ -549,7 +555,10 @@ pub(crate) fn guardian_mark_manual_start() {
     let mut state = match guardian_state().lock() {
         Ok(s) => s,
         Err(e) => {
-            guardian_log(&format!("guardian_mark_manual_start: 获取状态锁失败 (poisoned): {:?}", e));
+            guardian_log(&format!(
+                "guardian_mark_manual_start: 获取状态锁失败 (poisoned): {:?}",
+                e
+            ));
             return;
         }
     };
@@ -565,7 +574,10 @@ pub(crate) fn guardian_pause(reason: &str) {
     let mut state = match guardian_state().lock() {
         Ok(s) => s,
         Err(e) => {
-            guardian_log(&format!("guardian_pause: 获取状态锁失败 (poisoned): {:?}", e));
+            guardian_log(&format!(
+                "guardian_pause: 获取状态锁失败 (poisoned): {:?}",
+                e
+            ));
             return;
         }
     };
@@ -578,7 +590,10 @@ pub(crate) fn guardian_resume(reason: &str) {
     let mut state = match guardian_state().lock() {
         Ok(s) => s,
         Err(e) => {
-            guardian_log(&format!("guardian_resume: 获取状态锁失败 (poisoned): {:?}", e));
+            guardian_log(&format!(
+                "guardian_resume: 获取状态锁失败 (poisoned): {:?}",
+                e
+            ));
             return;
         }
     };
@@ -624,7 +639,10 @@ async fn guardian_tick(app: &tauri::AppHandle) {
         let mut state = match guardian_state().lock() {
             Ok(s) => s,
             Err(e) => {
-                guardian_log(&format!("guardian_tick: 获取守护状态锁失败 (poisoned): {:?}", e));
+                guardian_log(&format!(
+                    "guardian_tick: 获取守护状态锁失败 (poisoned): {:?}",
+                    e
+                ));
                 return;
             }
         };
@@ -906,10 +924,7 @@ pub fn start_backend_guardian(app: tauri::AppHandle) {
                     guardian_log("cleanup_zombie 异步任务执行完毕");
                 }
                 Ok(Ok(Err(e))) => {
-                    let msg = format!(
-                        "cleanup_zombie panic: {}",
-                        panic_message(&e)
-                    );
+                    let msg = format!("cleanup_zombie panic: {}", panic_message(&e));
                     guardian_log(&msg);
                 }
                 Ok(Err(join_err)) => {
@@ -1376,10 +1391,13 @@ mod platform {
     /// 防止 lock 文件残留导致后续 "EPERM: operation not permitted" 启动失败
     #[allow(dead_code)]
     fn cleanup_gateway_lock_files() {
-        let temp = match env::var("TEMP").or_else(|_| env::var("TMP").map(|s| s.replace('\\', "/"))) {
+        let temp = match env::var("TEMP").or_else(|_| env::var("TMP").map(|s| s.replace('\\', "/")))
+        {
             Ok(t) => PathBuf::from(t),
             Err(e) => {
-                super::guardian_log(&format!("cleanup_gateway_lock_files: 无法获取 TEMP 目录: {e}"));
+                super::guardian_log(&format!(
+                    "cleanup_gateway_lock_files: 无法获取 TEMP 目录: {e}"
+                ));
                 return;
             }
         };
@@ -1437,7 +1455,9 @@ mod platform {
     /// 防止 schtasks 注册残留导致 openclaw gateway start 拒绝启动
     #[allow(dead_code)]
     fn cleanup_gateway_scheduled_task() {
-        super::guardian_log("cleanup_gateway_scheduled_task: 尝试删除 Scheduled Task 'OpenClaw Gateway'");
+        super::guardian_log(
+            "cleanup_gateway_scheduled_task: 尝试删除 Scheduled Task 'OpenClaw Gateway'",
+        );
 
         // 先用 schtasks /End 强制终止正在运行的该任务（如果存在）
         let _ = StdCommand::new("schtasks")
@@ -1454,9 +1474,7 @@ mod platform {
         match output {
             Ok(out) => {
                 if out.status.success() {
-                    super::guardian_log(
-                        "cleanup_gateway_scheduled_task: Scheduled Task 已删除",
-                    );
+                    super::guardian_log("cleanup_gateway_scheduled_task: Scheduled Task 已删除");
                 } else {
                     let stderr = String::from_utf8_lossy(&out.stderr);
                     super::guardian_log(&format!(
@@ -1482,7 +1500,9 @@ mod platform {
         }))
         .unwrap_or_else(|e| {
             let msg = super::panic_message(&e);
-            super::guardian_log(&format!("cleanup_zombie: gateway_listen_port panic: {msg}, 使用默认端口 18789"));
+            super::guardian_log(&format!(
+                "cleanup_zombie: gateway_listen_port panic: {msg}, 使用默认端口 18789"
+            ));
             18789
         });
         super::guardian_log(&format!("cleanup_zombie: 读取 Gateway 端口 = {port}"));
@@ -1492,7 +1512,10 @@ mod platform {
             super::guardian_log(&format!("cleanup_zombie: 端口 {port} 无监听进程，跳过清理"));
             return;
         }
-        super::guardian_log(&format!("cleanup_zombie: 端口 {port} 发现 {} 个监听进程: {pids:?}", pids.len()));
+        super::guardian_log(&format!(
+            "cleanup_zombie: 端口 {port} 发现 {} 个监听进程: {pids:?}",
+            pids.len()
+        ));
 
         let responsive = is_gateway_port_responsive(port);
         super::guardian_log(&format!("cleanup_zombie: /health 响应状态 = {responsive}"));
@@ -2120,7 +2143,9 @@ mod platform {
                     let _ = std::process::Command::new("kill")
                         .args(["-9", &pid.to_string()])
                         .output();
-                    super::guardian_log(&format!("[cleanup_zombie] killed PID {pid} on port {port}"));
+                    super::guardian_log(&format!(
+                        "[cleanup_zombie] killed PID {pid} on port {port}"
+                    ));
                 }
             }
         }
@@ -2319,7 +2344,9 @@ pub async fn get_services_status() -> Result<Vec<ServiceStatus>, String> {
             if let Some(record) = owner.as_ref() {
                 if gateway_owner_pid_needs_refresh(record, pid) {
                     if let Err(e) = write_gateway_owner(pid) {
-                        guardian_log(&format!("[get_services_status] 刷新 Gateway owner PID 失败: {e}"));
+                        guardian_log(&format!(
+                            "[get_services_status] 刷新 Gateway owner PID 失败: {e}"
+                        ));
                     }
                 }
             }
@@ -2327,7 +2354,9 @@ pub async fn get_services_status() -> Result<Vec<ServiceStatus>, String> {
         if running && !owned_by_current_instance && should_auto_claim_gateway(&owner) {
             match write_gateway_owner(pid) {
                 Ok(()) => owned_by_current_instance = true,
-                Err(e) => guardian_log(&format!("[get_services_status] 自动认领 Gateway 失败: {e}")),
+                Err(e) => {
+                    guardian_log(&format!("[get_services_status] 自动认领 Gateway 失败: {e}"))
+                }
             }
         }
         let ownership = if !running {
