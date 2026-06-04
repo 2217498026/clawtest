@@ -35,6 +35,7 @@ pub mod config;
 pub mod device;
 pub mod diagnose;
 pub mod extensions;
+pub mod hardware;
 pub mod hermes;
 pub mod logs;
 pub mod memory;

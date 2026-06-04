@@ -4,8 +4,8 @@ mod tray;
 mod utils;
 
 use commands::{
-    agent, assistant, config, device, diagnose, extensions, hermes, logs, memory, messaging,
-    pairing, service, skills, update,
+    agent, assistant, config, device, diagnose, extensions, hardware, hermes, logs, memory,
+    messaging, pairing, service, skills, update,
 };
 use tauri::Manager;
 
@@ -204,6 +204,8 @@ pub fn run() {
             config::relaunch_app,
             // 设备密钥 + Gateway 握手
             device::create_connect_frame,
+            // 硬件信息
+            hardware::get_motherboard_serial,
             // 设备配对
             pairing::auto_pair_device,
             pairing::check_pairing_status,

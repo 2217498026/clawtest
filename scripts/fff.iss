@@ -2,10 +2,15 @@
 #define MyAppName "My Program"
 #define MyAppVersion "1.5"
 #define MyAppPublisher "My Company, Inc."
-#define MyAppExeName "OpenClaw_0.0.1_x64-setup.exe"
+#define MyAppExeName "OpenClaw_0.1.13_x64-setup.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".myp"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
+
+
+
+
+
 
 [Setup]
 AppId={{CBFCBA02-B778-4EF3-B326-B6FC9736E3F1}

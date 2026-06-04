@@ -308,31 +308,32 @@ function showLoginOverlay(defaultPw) {
 
 var codesucess=false;
 
+/**
+ * 获取本机主板序列号作为机器唯一标识
+ * Tauri 环境下调用 Rust 后端命令，Web 模式下回退到服务器获取 IP
+ */
 async function getPublicIp() {
- 
-    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-   /*  const response = await Promise.race([
-      fetch('https://api.ipify.org?format=json').then(async res => {
-        if (!res.ok) throw new Error('ipify failed')
-        const data = await res.json()
-        return data.ip || ''
-      }),
-      fetch('https://icanhazip.com').then(async res => {
-        if (!res.ok) throw new Error('icanhazip failed')
-        return (await res.text()).trim()
-      }),
-    ]) */
+  // Tauri 环境：通过 invoke 调用 Rust 后端获取主板序列号
+  if (isTauriRuntime()) {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core')
+      const serial = await invoke('get_motherboard_serial')
+      if (serial && serial !== 'N/A') {
+        return serial
+      }
+    } catch (e) {
+      console.warn('[getPublicIp] Tauri 获取主板序列号失败，回退到服务器:', e)
+    }
+    return ''
+  }
 
-      const response = await fetch(`${CODE_SERVER_URL}/api/Login/GetClientIp`).then(async res => {
-        if (!res.ok) throw new Error('ip failed')
-        return (await res.text()).replaceAll('"','').trim()
-      })
-/*   const result = await Promise.race([response, timeout])
-    return result */
+  // Web 模式：调用服务器 API 获取 IP（原有逻辑）
+  const response = await fetch(`${CODE_SERVER_URL}/api/Login/GetClientIp`).then(async res => {
+    if (!res.ok) throw new Error('ip failed')
+    return (await res.text()).replaceAll('"','').trim()
+  })
 
-
-    return response || ''
- 
+  return response || ''
 }
 
 async function fetchcode(cde) {
