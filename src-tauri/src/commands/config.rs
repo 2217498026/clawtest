@@ -6137,16 +6137,22 @@ async fn offline_install_node_msi(app: &tauri::AppHandle) -> Result<String, Stri
 
             // 每 10% 报告一次进度（避免遗漏）
             if total_size > 0 {
-                let current_10pct = downloaded.checked_mul(10).and_then(|v| v.checked_div(total_size)).unwrap_or(0);
+                let current_10pct = downloaded
+                    .checked_mul(10)
+                    .and_then(|v| v.checked_div(total_size))
+                    .unwrap_or(0);
                 if current_10pct > last_reported_10pct {
-                    let percent = (downloaded.checked_mul(100).and_then(|v| v.checked_div(total_size)).unwrap_or(0)) as u32;
+                    let percent = (downloaded
+                        .checked_mul(100)
+                        .and_then(|v| v.checked_div(total_size))
+                        .unwrap_or(0)) as u32;
                     let _ = app.emit(
                         "upgrade-log",
                         format!(
                             "⏳ 下载进度: {}% ({}MB / {}MB)",
                             percent,
-                        downloaded.checked_div(1048576).unwrap_or(0),
-                        total_size.checked_div(1048576).unwrap_or(0)
+                            downloaded.checked_div(1048576).unwrap_or(0),
+                            total_size.checked_div(1048576).unwrap_or(0)
                         ),
                     );
                     last_reported_10pct = current_10pct;
