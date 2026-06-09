@@ -1,5 +1,5 @@
 # ClawPanel 发布构建工作流
-# 推送 v* 标签时自动构建 macOS (Apple Silicon) 产物并创建 GitHub Release
+# 推送 v* 标签时自动构建 macOS (Apple Silicon + Intel) 产物并创建 GitHub Release
 name: Release
 
 on:
@@ -15,7 +15,7 @@ on:
         default: 'v1.0.0'
 
 jobs:
-  # ── macOS (Apple Silicon) 构建 job ─────────────────────────────────────────
+  # ── macOS 构建 job (Apple Silicon + Intel) ──────────────────────────────────
   build:
     name: 构建 (${{ matrix.platform.name }})
     runs-on: ${{ matrix.platform.os }}
@@ -29,6 +29,12 @@ jobs:
             os: macos-latest
             args: --target aarch64-apple-darwin
             rust_target: aarch64-apple-darwin
+            arch: aarch64
+          - name: macOS (Intel)
+            os: macos-13
+            args: --target x86_64-apple-darwin
+            rust_target: x86_64-apple-darwin
+            arch: x86_64
 
     steps:
       - name: 签出代码
@@ -86,7 +92,7 @@ jobs:
         with:
           tagName: ${{ env.TAG_NAME }}
           releaseName: "ClawPanel ${{ env.TAG_NAME }}"
-          releaseBody: "正在构建 macOS (Apple Silicon) 安装包，请稍候..."
+          releaseBody: "正在构建 macOS (Apple Silicon + Intel) 安装包，请稍候..."
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.platform.args }}
@@ -139,7 +145,8 @@ jobs:
           echo "✅ 找到 .app: $APP_PATH"
 
           APP_NAME="$(basename "$APP_PATH" .app)"
-          PKG_FILE="ClawPanel_${VERSION}_aarch64.pkg"
+          ARCH="${{ matrix.platform.arch }}"
+          PKG_FILE="ClawPanel_${VERSION}_${ARCH}.pkg"
 
           # 使用 pkgbuild 打包，--scripts 指向 preinstall 目录
           pkgbuild \
@@ -312,9 +319,9 @@ jobs:
 
           # ── 构建状态 ──
           if [ "$BUILD_RESULT" = "success" ]; then
-            STATUS_BADGE="✅ macOS (Apple Silicon) 构建成功"
+            STATUS_BADGE="✅ macOS (Apple Silicon + Intel) 构建成功"
           else
-            STATUS_BADGE="⚠️ 构建失败，请查看 [Actions 日志](https://github.com/${REPO}/actions)"
+            STATUS_BADGE="⚠️ 部分构建失败，请查看 [Actions 日志](https://github.com/${REPO}/actions)"
           fi
 
           # ── 写入 Release Notes ──
@@ -328,10 +335,12 @@ jobs:
             echo "|------|------|--------|"
             echo "| Apple Silicon (M1/M2/M3/M4) | .pkg（推荐，自动安装 OpenClaw） | [ClawPanel_${VERSION}_aarch64.pkg](${DL}/ClawPanel_${VERSION}_aarch64.pkg) |"
             echo "| Apple Silicon (M1/M2/M3/M4) | .dmg | [ClawPanel_${VERSION}_aarch64.dmg](${DL}/ClawPanel_${VERSION}_aarch64.dmg) |"
+            echo "| Intel (x86_64) | .pkg（推荐，自动安装 OpenClaw） | [ClawPanel_${VERSION}_x86_64.pkg](${DL}/ClawPanel_${VERSION}_x86_64.pkg) |"
+            echo "| Intel (x86_64) | .dmg | [ClawPanel_${VERSION}_x86_64.dmg](${DL}/ClawPanel_${VERSION}_x86_64.dmg) |"
             echo ""
             echo '> **💡 .pkg 与 .dmg 的区别**：`.pkg` 会在安装前自动执行 `install-openclaw.sh`（嵌入的 preinstall 脚本），通过国内镜像源一键安装 OpenClaw CLI 与 Gateway 服务；`.dmg` 仅拷贝 App，需首次启动后手动安装 OpenClaw。'
             echo ""
-            echo '> **⚠️ 首次打开提示“无法验证开发者”？** 在终端执行：`sudo xattr -rd com.apple.quarantine /Applications/ClawPanel.app`，或前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。'
+            echo '> **⚠️ 首次打开提示"无法验证开发者"？** 在终端执行：`sudo xattr -rd com.apple.quarantine /Applications/ClawPanel.app`，或前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。'
             echo ""
             echo "---"
             echo ""
@@ -342,7 +351,7 @@ jobs:
             echo "3. 如未安装 OpenClaw，按提示一键安装即可"
             echo "4. 安装完成后自动跳转仪表盘，开始使用"
             echo ""
-            echo '> **系统要求**：macOS 11+ (Apple Silicon)，Node.js 18+（推荐 22 LTS）'
+            echo '> **系统要求**：macOS 11+ (Apple Silicon 或 Intel)，Node.js 18+（推荐 22 LTS）'
             echo ""
             echo "---"
             echo ""
