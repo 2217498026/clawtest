@@ -1,0 +1,194 @@
+{
+  "_meta": {
+    "description": "机器可读能力索引 — 每个能力对应一个 ops 函数",
+    "updated": "2026-05-18",
+    "source": "会话产出文件交叉验证"
+  },
+
+  "yuntu": {
+    "module": "./yuntu-ops",
+    "trendStage1": {
+      "switchCategory": {
+        "fn": "switchCategory",
+        "method": "elementFromPoint扫描 + fiber.onClick",
+        "reliability": "100%",
+        "verified": "2026-05-13",
+        "output": "趋势品_男装_5-9月_全量_20260515.json"
+      },
+      "switchMonth": {
+        "fn": "switchMonth",
+        "method": "DOM click Radio(y≈216)",
+        "reliability": "100%",
+        "verified": "2026-05-13"
+      },
+      "nextPage": {
+        "fn": "nextPage",
+        "method": "fiber.onClick pager LI",
+        "reliability": "100%",
+        "verified": "2026-05-13"
+      },
+      "extractTrendTable": {
+        "fn": "extractTrendTable",
+        "method": "innerText → compact行解析",
+        "reliability": "100%",
+        "verified": "2026-05-13"
+      },
+      "extractAllTrendPages": {
+        "fn": "extractAllTrendPages",
+        "method": "翻页循环提取全量数据",
+        "reliability": "100%",
+        "verified": "2026-05-15",
+        "output": "趋势品_男装_5-9月_全量_20260515.json (187KB)"
+      }
+    },
+    "trendStage2": {
+      "warmUpSellingTab": {
+        "fn": "warmUpSellingTab",
+        "method": "dispatchEvent 卖点识别tab",
+        "reliability": "100%",
+        "verified": "2026-05-17"
+      },
+      "switchSellingPointType": {
+        "fn": "switchSellingPointType",
+        "method": "SelectTagList__FilterItem DOM click",
+        "reliability": "100%",
+        "verified": "2026-05-15",
+        "output": "卖点识别_全量提取.json (22KB)"
+      },
+      "extractKeywords": {
+        "fn": "extractKeywords",
+        "method": "ProductKeywordsTable innerText",
+        "reliability": "100%",
+        "verified": "2026-05-15"
+      },
+      "extractProducts": {
+        "fn": "extractProducts",
+        "method": "HotProductsTable innerText (744条)",
+        "reliability": "100%",
+        "verified": "2026-05-15"
+      },
+      "extractProductLinks": {
+        "fn": "extractProductLinks",
+        "method": "haohuo.jinritemai.com/views/product/detail?id= 格式",
+        "reliability": "100%",
+        "verified": "2026-05-15",
+        "output": "mens-shoes-products-final.json (10个链接)"
+      }
+    },
+    "workflow": {
+      "trendSelection": {
+        "fn": "trendSelection",
+        "description": "趋势品全自动选品: 类目切换→月份遍历→翻页全量提取→卖点识别→商品链接",
+        "steps": ["switchCategory", "switchMonth×N", "extractAllTrendPages", "warmUpSellingTab", "switchSellingPointType×9", "extractProducts", "extractProductLinks"]
+      }
+    }
+  },
+
+  "buyin": {
+    "module": "./buyin-ops",
+    "ranking": {
+      "navigateToRanking": {
+        "fn": "navigateToRanking",
+        "method": "sidebar click [137,313]",
+        "reliability": "100%"
+      },
+      "switchSubRank": {
+        "fn": "switchSubRank",
+        "method": "textContent 匹配DOM click",
+        "reliability": "100%",
+        "verified": "2026-05-12",
+        "output": "联盟榜单_运动户外_2026-05-12.json"
+      },
+      "extractRankingProducts": {
+        "fn": "extractRankingProducts",
+        "method": "innerText → compact行解析 (排名/商品名/店铺/佣金)",
+        "reliability": "100%",
+        "output": "联盟榜单_4个类目各12-14KB"
+      }
+    },
+    "productDetail": {
+      "clickProductByName": {
+        "fn": "clickProductByName",
+        "method": "textContent匹配 → TD click打开详情",
+        "reliability": "90%"
+      },
+      "extractReviews": {
+        "fn": "extractReviews",
+        "method": "商品评价tab [968,503] → innerText解析",
+        "reliability": "100%",
+        "verified": "2026-05-14"
+      },
+      "extractProductInfo": {
+        "fn": "extractProductInfo",
+        "method": "带货数据tab → innerText解析 + location.href",
+        "reliability": "100%",
+        "output": "baiying_sportswear_final_2026-05-13.json"
+      },
+      "blueOceanScore": {
+        "fn": "blueOceanScore",
+        "method": "月销分+佣金分+体验分 → 0-15",
+        "reliability": "100%"
+      }
+    },
+    "knownLimitations": [
+      "选品广场类目按钮不刷新 → 用联盟榜单替代",
+      "选品广场搜索不生效 → 联盟榜单TD点击直开详情",
+      "联盟榜单textContent类目切换不稳定 → 备选罗盘获取销量"
+    ]
+  },
+
+  "compass": {
+    "module": "./compass-ops",
+    "category": {
+      "switchCategory": {
+        "fn": "switchCategory",
+        "method": "ecom-cascader-menu-item DOM click",
+        "reliability": "100%",
+        "verified": "2026-05-13"
+      }
+    },
+    "productRanking": {
+      "switchSubTab": {
+        "fn": "switchSubTab",
+        "method": "textContent DOM click (9子榜)",
+        "reliability": "100%"
+      },
+      "switchBrandType": {
+        "fn": "switchBrandType",
+        "method": "ecom-radio-button-wrapper click",
+        "reliability": "100%"
+      },
+      "switchTimeRange": {
+        "fn": "switchTimeRange",
+        "method": "ecom-radio-group click (坐标映射)",
+        "reliability": "100%"
+      },
+      "extractProductRanking": {
+        "fn": "extractProductRanking",
+        "method": "innerText → compact空行解析",
+        "reliability": "100%",
+        "verified": "2026-05-14"
+      }
+    },
+    "searchRanking": {
+      "extractSearchRanking": {
+        "fn": "extractSearchRanking",
+        "method": "innerText → 搜索词/曝光/支付/点击率/转化率解析",
+        "reliability": "95%"
+      }
+    },
+    "categoryMining": {
+      "navigateToCategoryMining": {
+        "fn": "navigateToCategoryMining",
+        "method": "Page.navigate URL导航",
+        "reliability": "100%"
+      },
+      "switchMiningTab": {
+        "fn": "switchMiningTab",
+        "method": "ecom-tabs-tab-btn DOM click",
+        "reliability": "100%"
+      }
+    },
+    "hardLimitations": []
+  }
+}

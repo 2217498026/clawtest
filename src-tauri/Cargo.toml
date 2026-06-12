@@ -1,8 +1,8 @@
 [package]
 name = "clawpanel"
-version = "0.1.13"
+version = "0.1.15"
 edition = "2021"
-description = "OpenClaw可视化管理面板"
+description = "擎动未来AI电商可视化管理面板"
 authors = ["qingchencloud"]
 repository = "https://github.com/qingchencloud/clawpanel"
 homepage = "https://github.com/qingchencloud/clawpanel"
