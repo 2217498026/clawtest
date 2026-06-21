@@ -43,10 +43,8 @@ const STAGE_MAP = {
 // ─── 超时常量 ────────────────────────────────────────────────
 
 const GATEWAY_START_POLL_INTERVAL = 1500  // 1.5s 检测一次
-const GATEWAY_START_TIMEOUT       = 30000 // 最长等 30s
 const PORT_PROBE_INTERVAL         = 2000  // 2s 探测一次
-const PORT_PROBE_TIMEOUT          = 10000 // 最长等 10s
-const WS_HANDSHAKE_TIMEOUT        = 25000 // 最长等 25s
+const WS_HANDSHAKE_TIMEOUT        = 1000 * 60 * 5   // 单次 waitForReady 等待上限
 
 // ─── 状态机 ──────────────────────────────────────────────────
 
@@ -113,6 +111,7 @@ export class InitOverlay {
     this._el = null
     this._closeResolve = null // 用于 close() 的可选 Promise
     this._isClosed = false
+    this._isAborted = false   // 用户主动中止标志
     this._unsub = null
   }
 
@@ -123,9 +122,16 @@ export class InitOverlay {
     overlay.id = 'init-overlay'
     overlay.innerHTML = `
       <div class="init-card">
+        <button class="init-close-btn" id="init-close-btn" title="关闭" aria-label="关闭初始化">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
         ${_LOGOSVG}
-        <div class="init-title">OpenClaw</div>
+        <div class="init-title">智能体</div>
         <div class="init-stage-text" id="init-stage-text">初始化中...</div>
+        <div class="init-countdown" id="init-countdown" style="display:none">
+          <div class="init-countdown-label" id="init-countdown-label"></div>
+          <div class="init-countdown-value" id="init-countdown-value">00:00</div>
+        </div>
         <div class="init-progress-bar">
           <div class="init-progress-inner" id="init-progress-inner" style="width:0%"></div>
         </div>
@@ -140,6 +146,14 @@ export class InitOverlay {
     `
     document.body.appendChild(overlay)
     this._el = overlay
+
+    // 关闭按钮：中止执行 + 隐藏覆盖层
+    const closeBtn = overlay.querySelector('#init-close-btn')
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.abort()
+      })
+    }
 
     // 订阅状态变化，自动同步 UI
     this._unsub = this._sm.onStateChange((stageDef, stageId, payload) => {
@@ -170,6 +184,47 @@ export class InitOverlay {
     if (!this._el) return
     const el = this._el.querySelector('#init-status')
     if (el) el.textContent = msg
+  }
+
+  /**
+   * 启动倒计时显示，每秒更新 DOM
+   * @param {number} totalMs     倒计时总时长（毫秒）
+   * @param {string} label       倒计时标签（如 "Gateway 启动倒计时"）
+   */
+  _startCountdown(totalMs, label) {
+    this._stopCountdown()
+    const wrap = this._el?.querySelector('#init-countdown')
+    const labelEl = this._el?.querySelector('#init-countdown-label')
+    const valueEl = this._el?.querySelector('#init-countdown-value')
+    if (!wrap || !valueEl) return
+
+    if (labelEl) labelEl.textContent = label
+    // 移除内联 display 让 CSS 的 flex 生效
+    wrap.style.display = ''
+
+    const end = Date.now() + totalMs
+    const tick = () => {
+      const remain = Math.max(0, end - Date.now())
+      const totalSec = Math.floor(remain / 1000)
+      const mm = String(Math.floor(totalSec / 60)).padStart(2, '0')
+      const ss = String(totalSec % 60).padStart(2, '0')
+      valueEl.textContent = `${mm}:${ss}`
+      if (remain <= 0) {
+        this._stopCountdown()
+      }
+    }
+    tick()
+    this._countdownTimer = setInterval(tick, 1000)
+  }
+
+  /** 停止倒计时，隐藏显示 */
+  _stopCountdown() {
+    if (this._countdownTimer) {
+      clearInterval(this._countdownTimer)
+      this._countdownTimer = null
+    }
+    const wrap = this._el?.querySelector('#init-countdown')
+    if (wrap) wrap.style.display = 'none'
   }
 
   /** 显示错误面板 */
@@ -237,6 +292,20 @@ export class InitOverlay {
   /** 设置关闭回调 */
   onClose(fn) { this._onClose = fn }
 
+  /** 标记中止状态（用户主动关闭），并隐藏覆盖层 */
+  abort() {
+    if (this._isAborted) return
+    this._isAborted = true
+    console.log('[init-progress] 用户主动中止初始化流程')
+    this.close()
+    if (this._onAbort) this._onAbort()
+  }
+
+  get isAborted() { return this._isAborted }
+
+  /** 设置中止回调 */
+  onAbort(fn) { this._onAbort = fn }
+
   /** 关闭并移除覆盖层 */
   close() {
     if (this._isClosed || !this._el) return
@@ -262,30 +331,28 @@ export class InitOverlay {
 
 // ─── 管线工具函数 ────────────────────────────────────────────
 
-/** 轮询 Gateway 服务状态，直到 running=true 或超时 */
-async function pollGatewayRunning(overlay, msTimeout = GATEWAY_START_TIMEOUT) {
-  const deadline = Date.now() + msTimeout
-  while (Date.now() < deadline) {
+/** 轮询 Gateway 服务状态，直到 running=true（无限轮询直到成功或用户中止） */
+async function pollGatewayRunning(overlay) {
+  while (true) {
+    if (overlay.isAborted) throw new Error('USER_ABORT')
     await refreshGatewayStatus()
     if (isGatewayRunning()) return true
-    overlay._setStatus(`等待 Gateway 启动中...`)
+    overlay._setStatus(`正在连接中...`)
     await new Promise(r => setTimeout(r, GATEWAY_START_POLL_INTERVAL))
   }
-  throw new Error('Gateway 启动超时')
 }
 
-/** TCP 端口探测：确认 Gateway 端口可达 */
-async function probeGatewayPort(overlay, msTimeout = PORT_PROBE_TIMEOUT) {
-  const deadline = Date.now() + msTimeout
-  while (Date.now() < deadline) {
+/** TCP 端口探测：确认 Gateway 端口可达（无限轮询直到成功或用户中止） */
+async function probeGatewayPort(overlay) {
+  while (true) {
+    if (overlay.isAborted) throw new Error('USER_ABORT')
     try {
       const ok = await api.probeGatewayPort()
       if (ok) return true
     } catch {}
-    overlay._setStatus(`等待 Gateway 端口就绪...`)
+    overlay._setStatus(`正在连接中...`)
     await new Promise(r => setTimeout(r, PORT_PROBE_INTERVAL))
   }
-  throw new Error('Gateway 端口探测超时，端口未就绪')
 }
 
 // ─── 主初始化管线 ────────────────────────────────────────────
@@ -329,12 +396,14 @@ export async function runInitPipeline(opts = {}) {
       sm.transitionTo('connecting-ws')
     } else {
       sm.transitionTo('starting-gateway')
+      overlay._setStatus('正在连接中...')
+
       try {
         await api.startService('ai.openclaw.gateway')
       } catch (startErr) {
-        // 处理外部 Gateway 冲突
         const errMsg = startErr?.message || String(startErr)
         if (/foreign|already.*managed|not.*owned/i.test(errMsg)) {
+          // 外部冲突（不可恢复）：显示错误面板
           sm.transitionTo('error', {
             error: 'Gateway 已被其他实例管理',
             detail: errMsg,
@@ -342,16 +411,14 @@ export async function runInitPipeline(opts = {}) {
           })
           return { success: false, error: startErr }
         }
-        throw startErr
+        // 其他启动错误（如命令超时）：服务可能在后台启动中，继续轮询等待就绪
+        console.warn('[init-progress] startService 报错，继续轮询等待 Gateway 就绪:', errMsg)
       }
 
-      // ─── 阶段3：等待 Gateway 就绪 ──────────────────────────
+      // ─── 等待 Gateway 就绪（无限轮询直到成功）──────────────
       sm.transitionTo('waiting-gateway')
-      await pollGatewayRunning(overlay, GATEWAY_START_TIMEOUT)
-
-      // 再做 TCP 端口探测确认
-      await probeGatewayPort(overlay, PORT_PROBE_TIMEOUT)
-
+      await pollGatewayRunning(overlay)
+      await probeGatewayPort(overlay)
       sm.transitionTo('connecting-ws')
     }
 
@@ -404,13 +471,17 @@ export async function runInitPipeline(opts = {}) {
 
     wsClient.connect(host, token, { password })
 
-    // ─── 阶段5：等待 WebSocket 握手完成 ─────────────────────
+    // ─── 阶段5：等待 WebSocket 握手完成（循环检测直到成功）─────
     sm.transitionTo('handshaking')
-    overlay._setStatus('WebSocket 握手进行中...')
+    overlay._setStatus('正在连接中...')
 
-    const handshakeResult = await wsClient.waitForReady(WS_HANDSHAKE_TIMEOUT)
-    if (!handshakeResult.ok) {
-      throw new Error(handshakeResult.reason || 'WebSocket 握手失败')
+    // 无限循环等待握手成功，依赖 wsClient 自动重连机制
+    while (true) {
+      if (overlay.isAborted) throw new Error('USER_ABORT')
+      const handshakeResult = await wsClient.waitForReady(WS_HANDSHAKE_TIMEOUT)
+      if (handshakeResult.ok) break
+      console.warn('[init-progress] WebSocket 握手未就绪，继续等待:', handshakeResult.reason)
+      overlay._setStatus('正在连接中...')
     }
 
     // ─── 阶段6：就绪 ──────────────────────────────────────────
@@ -418,10 +489,16 @@ export async function runInitPipeline(opts = {}) {
     return { success: true }
 
   } catch (err) {
+    // 用户主动中止：静默返回，不显示错误面板
+    if (err?.message === 'USER_ABORT') {
+      console.log('[init-progress] 初始化流程已被用户中止')
+      return { success: false, error: err, aborted: true }
+    }
     const errMsg = err?.message || String(err)
     // 确定失败阶段
     const currentStage = sm.stage
     const stageLabel = currentStage && currentStage !== STAGES.ERROR ? currentStage.label : ''
+    // 显示错误面板 + 重试按钮
     sm.transitionTo('error', {
       error: errMsg,
       message: errMsg,

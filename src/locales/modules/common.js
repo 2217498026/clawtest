@@ -64,7 +64,7 @@ export default {
   downloadingDependencies: _('正在下载依赖...', 'Downloading dependencies...', '正在下載依賴...', '依存関係をダウンロード中...', '의존성 다운로드 중...', 'Đang tải phụ thuộc...'),
   installingProgress: _('正在安装...', 'Installing...', '正在安裝...', 'インストール中...', '설치 중...', 'Đang cài đặt...'),
   completed: _('完成', 'Completed', '完成', '完了', '완료', 'Hoàn tất'),
-  upgradeOpenClaw: _('升级 OpenClaw', 'Upgrade OpenClaw', '升級 OpenClaw', 'OpenClaw をアップグレード', 'OpenClaw 업그레이드', 'Nâng cấp OpenClaw'),
+  upgradeOpenClaw: _('升级 智能体', 'Upgrade 智能体', '升級 智能体', '智能体 をアップグレード', '智能体 업그레이드', 'Nâng cấp 智能体'),
   upgradeCompleted: _('升级完成', 'Upgrade completed', '升級完成', 'アップグレード完了', '업그레이드 완료', 'Nâng cấp hoàn tất'),
   upgradeFailed: _('升级失败', 'Upgrade failed', '升級失敗', 'アップグレード失敗', '업그레이드 실패', 'Nâng cấp thất bại'),
   unknownCommand: _('未知命令', 'Unknown command', '未知命令', '不明なコマンド', '알 수 없는 명령', 'Lệnh không xác định'),

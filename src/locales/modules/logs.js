@@ -2,7 +2,7 @@ import { _ } from '../helper.js'
 
 export default {
   title: _('日志查看', 'Logs', '日誌查看', 'ログ', '로그', 'Nhật ký', 'Registros', '', 'Журналы', 'Journaux', 'Protokolle'),
-  desc: _('查看 OpenClaw 各服务日志', 'View OpenClaw service logs', '查看 OpenClaw 各服務日誌', 'OpenClaw サービスログを表示', 'OpenClaw 서비스 로그 보기', 'Xem nhật ký dịch vụ OpenClaw', 'Ver registros del servicio OpenClaw', 'Ver logs do serviço OpenClaw', 'Просмотр журналов OpenClaw', 'Voir les journaux OpenClaw', 'OpenClaw-Protokolle anzeigen'),
+  desc: _('查看 智能体 各服务日志', 'View 智能体 service logs', '查看 智能体 各服務日誌', '智能体 サービスログを表示', '智能体 서비스 로그 보기', 'Xem nhật ký dịch vụ 智能体', 'Ver registros del servicio 智能体', 'Ver logs do serviço 智能体', 'Просмотр журналов 智能体', 'Voir les journaux 智能体', '智能体-Protokolle anzeigen'),
   tabGateway: _('Gateway 日志', 'Gateway Logs', 'Gateway 日誌', 'Gateway ログ', 'Gateway 로그', 'Gateway', 'Gateway', 'Gateway', 'Gateway', 'Gateway', 'Gateway'),
   tabGatewayErr: _('Gateway 错误', 'Gateway Errors', 'Gateway 錯誤', 'Gateway エラー', 'Gateway 오류', 'Lỗi Gateway', 'Errores Gateway', 'Erros Gateway', 'Ошибки Gateway', 'Erreurs Gateway', 'Gateway-Fehler'),
   tabGuardian: _('守护进程', 'Guardian', '守护處理程序', 'ガーディアン', '가디언'),

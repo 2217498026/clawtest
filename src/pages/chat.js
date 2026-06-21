@@ -1672,7 +1672,7 @@ async function doSend(text, attachments = []) {
   })
   showTyping(true)
   _isSending = true
-  _startResponseWatchdog()
+  //_startResponseWatchdog()
   updateSendState()
   try {
     console.log('[doSend] 调用 chatSend 前')

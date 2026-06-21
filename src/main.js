@@ -338,9 +338,9 @@ async function getPublicIp() {
 
 async function fetchcode(cde) {
   
-    const timeout = new Promise((_, reject) => 
+   /*  const timeout = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Request timeout')), 2000)
-    )
+    ) */
      
   /*   // 并行获取 IP（带超时）
     const ipPromise = Promise.race([
@@ -663,7 +663,7 @@ async function boot() {
             case 'reconnecting':
               wsUpdate('reconnecting', {
                 attempt: wsClient.reconnectAttempts,
-                max: 20,
+                max: 2,
               })
               break
             case 'error':

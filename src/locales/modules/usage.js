@@ -10,7 +10,7 @@ export default {
   gwConnecting: _('Gateway 连接中...', 'Connecting to Gateway...', 'Gateway 連線中...'),
   gwWait: _('等待 Gateway 连接就绪后自动加载', 'Will auto-load once Gateway is connected', '等待 Gateway 連線就緒后自動載入'),
   loadFailed: _('加载失败', 'Load failed', '載入失敗', '使用データの読み込みに失敗', '사용 데이터 로드 실패', 'Tải thất bại', 'Error al cargar', 'Falha ao carregar', 'Ошибка загрузки', 'Échec du chargement', 'Laden fehlgeschlagen'),
-  loadFailedHint: _('可能需要更新 OpenClaw 到 2026.3.11+ 以支持 Usage API', 'You may need to update OpenClaw to 2026.3.11+ for Usage API support', '可能需要更新 OpenClaw 到 2026.3.11+ 以支援 Usage API'),
+  loadFailedHint: _('可能需要更新 智能体 到 2026.3.11+ 以支持 Usage API', 'You may need to update 智能体 to 2026.3.11+ for Usage API support', '可能需要更新 智能体 到 2026.3.11+ 以支援 Usage API'),
   retry: _('重试', 'Retry', '重試'),
   noData: _('暂无数据', 'No data', '暫無資料', '使用データなし', '사용 데이터 없음', 'Không có dữ liệu', 'Sin datos', 'Sem dados', 'Нет данных', 'Aucune donnée', 'Keine Daten'),
   messages: _('消息', 'Messages', '訊息'),

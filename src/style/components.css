@@ -780,6 +780,40 @@ mark {
   text-align: center;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   animation: initFadeIn 0.35s ease;
+  position: relative;
+}
+
+.init-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-tertiary, #a1a1aa);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.init-close-btn:hover {
+  color: var(--text-primary, #18181b);
+  background: var(--bg-hover, #f4f4f5);
+}
+
+.init-close-btn:active {
+  transform: scale(0.92);
+}
+
+.init-close-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 @keyframes initFadeIn {
@@ -842,6 +876,34 @@ mark {
   color: var(--text-tertiary, #a1a1aa);
   min-height: 1.2em;
   word-break: break-all;
+}
+
+/* 倒计时 */
+.init-countdown {
+  margin: 10px 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.init-countdown-label {
+  font-size: 11px;
+  color: var(--text-tertiary, #a1a1aa);
+  letter-spacing: 0.5px;
+}
+
+.init-countdown-value {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent, #6366f1);
+  line-height: 1.1;
+  font-family: "SF Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  .init-countdown-value { color: var(--accent, #818cf8); }
 }
 
 /* 错误面板 */

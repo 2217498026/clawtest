@@ -20,24 +20,24 @@ export function uuid() {
 }
 
 // ── 超时常量 ──
-const REQUEST_TIMEOUT = 30000
+const REQUEST_TIMEOUT = 1000*60*30
 const MAX_RECONNECT_DELAY = 60000
 const PING_INTERVAL = 30000
 // Gateway 握手等待（等 challenge + frame 往返）
-const CHALLENGE_TIMEOUT = 15000
+const CHALLENGE_TIMEOUT = 1000*60*5
 // connect frame 生成 + 发送最长允许时间
-const FRAME_SEND_TIMEOUT = 10000
-const MAX_RECONNECT_ATTEMPTS = 20
+const FRAME_SEND_TIMEOUT = 1000*60*1
+const MAX_RECONNECT_ATTEMPTS = 2
 // 心跳：每 20s 检查一次；超过 80s 无消息计 1 次超时，连续 4 次触发重连
 const HEARTBEAT_CHECK_INTERVAL = 20000
-const HEARTBEAT_TIMEOUT = 80000
+const HEARTBEAT_TIMEOUT = 1000*60*20
 // 握手阶段无消息超时（TCP 连通但 Gateway 无响应）
-const HANDSHAKE_WATCHDOG_TIMEOUT = 20000
+const HANDSHAKE_WATCHDOG_TIMEOUT = 1000*60*20
 const MESSAGE_CACHE_SIZE = 100
 // Gateway 启动前的初始重连延迟
-const INITIAL_RECONNECT_DELAY = 10000
+const INITIAL_RECONNECT_DELAY =  30000
 // request() 等待重连就绪的最大时间
-const RECONNECT_WAIT_TIMEOUT = 25000
+const RECONNECT_WAIT_TIMEOUT = 1000*60*10
 
 export class WsClient {
   constructor() {
@@ -230,6 +230,9 @@ export class WsClient {
       if (wsId !== this._wsId) return
       if (!this._gatewayReady) {
         console.warn('[ws] 握手阶段超时（无消息），强制重连')
+       /*  this._closeWs()
+        this._scheduleReconnect() */
+
         this._closeWs()
         this._scheduleReconnect()
       }
@@ -556,8 +559,11 @@ export class WsClient {
       if (this._handshaking) {
         console.error('[ws] connect frame 生成超时，触发重连')
         this._handshaking = false
-        this._closeWs()
-        this._scheduleReconnect()
+     /*    this._closeWs()
+        this._scheduleReconnect() */
+       this._closeWs()
+        this._scheduleReconnect() 
+
       }
     }, FRAME_SEND_TIMEOUT)
     try {
@@ -736,21 +742,27 @@ export class WsClient {
       const now = Date.now()
       const timeSinceLastMessage = this._lastMessageAt ? now - this._lastMessageAt : 0
 
-      if (timeSinceLastMessage > HEARTBEAT_TIMEOUT) {
+       if (timeSinceLastMessage > HEARTBEAT_TIMEOUT) {
         this._missedHeartbeats++
         console.warn(`[ws] 心跳超时 (${Math.round(timeSinceLastMessage/1000)}秒无消息)，连续超时次数: ${this._missedHeartbeats}`)
 
         if (this._missedHeartbeats >= 4) {
           console.error('[ws] 心跳检测连续超时 4 次，强制重连')
           this._stopHeartbeat()
-          this.reconnect()
+           this.reconnect() 
         } else {
           console.warn(`[ws] 心跳超时 ${this._missedHeartbeats} 次，发送探测 ping...`)
           if (this._ws && this._ws.readyState === WebSocket.OPEN) {
             try { this._ws.send('{"type":"ping"}') } catch {}
           }
         }
-      }
+      } 
+
+   /* console.warn(`[ws] 心跳超时 ${this._missedHeartbeats} 次，发送探测 ping...`)
+          if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+            try { this._ws.send('{"type":"ping"}') } catch {}
+          } */
+
     }, HEARTBEAT_CHECK_INTERVAL)
   }
 
@@ -808,7 +820,7 @@ export class WsClient {
       const timer = setTimeout(() => {
         this._pending.delete(id)
         this._pendingRequests.delete(dedupKey)
-        reject(new Error('请求超时'))
+        reject(new Error('请求reques超时'))
       }, timeout)
       const promise = new Promise((res, rej) => {
         this._pending.set(id, { resolve: res, reject: rej, timer, dedupKey })
@@ -831,7 +843,7 @@ export class WsClient {
 
   // 超时 45s，重试 1 次（Gateway 加载大量历史时可能较慢）
   chatHistory(sessionKey, limit = 200) {
-    return this.request('chat.history', { sessionKey, limit }, { timeout: 45000, retries: 1, retryDelay: 2000 })
+    return this.request('chat.history', { sessionKey, limit }, { timeout: 1000*60*5, retries: 2, retryDelay: 2000 })
   }
 
   chatAbort(sessionKey, runId) {

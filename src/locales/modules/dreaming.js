@@ -2,14 +2,14 @@ import { _ } from '../helper.js'
 
 export default {
   title: _('梦境模式', 'Dreaming'),
-  desc: _('查看 OpenClaw 4.9 的 Dreaming 状态、梦境日记与记忆沉淀情况', 'View OpenClaw 4.9 Dreaming status, dream diary, and memory consolidation'),
+  desc: _('查看 智能体 4.9 的 Dreaming 状态、梦境日记与记忆沉淀情况', 'View 智能体 4.9 Dreaming status, dream diary, and memory consolidation'),
   viewScene: _('场景', 'Scene'),
   viewDiary: _('日记', 'Diary'),
   refresh: _('刷新', 'Refresh'),
   gwConnecting: _('Gateway 连接中...', 'Connecting to Gateway...'),
   gwWait: _('等待 Gateway 就绪后自动加载 Dreaming 数据', 'Will auto-load Dreaming data once Gateway is ready'),
   loadFailed: _('加载失败', 'Load failed'),
-  loadFailedHint: _('需要 OpenClaw 2026.4.9+ 且启用 memory-core Dreaming 功能', 'Requires OpenClaw 2026.4.9+ with memory-core Dreaming enabled'),
+  loadFailedHint: _('需要 智能体 2026.4.9+ 且启用 memory-core Dreaming 功能', 'Requires 智能体 2026.4.9+ with memory-core Dreaming enabled'),
   unsupportedHint: _('当前 Gateway 或记忆插件不支持 Dreaming 能力', 'The current Gateway or memory plugin does not support Dreaming'),
   toggleOn: _('启用梦境模式', 'Enable Dreaming'),
   toggleOff: _('关闭梦境模式', 'Disable Dreaming'),
@@ -68,5 +68,5 @@ export default {
   configUnavailable: _('无法获取在线配置快照，请稍后重试', 'Unable to load live config snapshot, please retry'),
   actionRunning: _('处理中...', 'Working...'),
   pluginUnsupported: _('当前记忆插件可能不支持 Dreaming 配置', 'The current memory plugin may not support Dreaming config'),
-  rpcUnsupported: _('当前 Gateway 版本不支持部分 Dreaming 操作，请升级到 OpenClaw 2026.4.9+', 'Current Gateway version does not support some Dreaming operations, please upgrade to OpenClaw 2026.4.9+'),
+  rpcUnsupported: _('当前 Gateway 版本不支持部分 Dreaming 操作，请升级到 智能体 2026.4.9+', 'Current Gateway version does not support some Dreaming operations, please upgrade to 智能体 2026.4.9+'),
 }

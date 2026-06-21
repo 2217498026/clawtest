@@ -266,7 +266,7 @@ function renderStatCards(page, services, version, agents, config, panelConfig) {
            </div>`
         : ''}
     </div>
-    <div class="stat-card">
+    <div class="stat-card" style="display:none">
       <div class="stat-card-header">
         <span class="stat-card-label">${t('dashboard.versionLabel')} · ${version.source === 'official' ? t('dashboard.versionOfficial') : version.source === 'chinese' ? t('dashboard.versionChinese') : t('dashboard.versionUnknownSource')}</span>
       </div>
@@ -306,7 +306,7 @@ function renderStatCards(page, services, version, agents, config, panelConfig) {
       <div class="stat-card-value">${runningCount}/${services.length}</div>
       <div class="stat-card-meta">${t('common.survivalRate')} ${services.length ? Math.round(runningCount / services.length * 100) : 0}%</div>
     </div>
-    <div class="stat-card stat-card-clickable" id="card-control-ui" title="${t('dashboard.controlUIDesc')}">
+    <div class="stat-card stat-card-clickable" id="card-control-ui" style="display:none" title="${t('dashboard.controlUIDesc')}">
       <div class="stat-card-header">
         <span class="stat-card-label">${t('dashboard.controlUI')}</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="opacity:0.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -410,7 +410,7 @@ function renderOverview(page, services, mcpConfig, backups, config, agents, stat
           </div>
         </div>
 
-        <div class="overview-card">
+        <div class="overview-card" style="display:none">
           <div class="overview-card-icon" style="color:var(--text-tertiary)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </div>

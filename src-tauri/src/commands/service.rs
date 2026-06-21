@@ -1914,6 +1914,9 @@ mod platform {
             .stdin(Stdio::null())
             .stdout(stdout_log)
             .stderr(stderr_log);
+       /*  cmd.arg("gateway")
+            .creation_flags(0x00000010)  ;// CREATE_NEW_CONSOLE：弹出新终端窗口 */
+           
 
         // 记录 spawn 前的已知 PID
         let before_pid = get_last_known_pid();

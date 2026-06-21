@@ -2,7 +2,7 @@ import { _ } from '../helper.js'
 
 export default {
   title: _('Agent 管理', 'Agents', '', 'Agent 管理', 'Agent 관리', 'Quản lý Agent', 'Gestión de Agentes', 'Gestão de Agentes', 'Управление агентами', 'Gestion des Agents', 'Agenten-Verwaltung'),
-  desc: _('创建和管理 OpenClaw Agent，配置身份、模型和工作区', 'Create and manage OpenClaw Agents, configure identity, model and workspace', '建立和管理 OpenClaw Agent，設定身份、模型和工作區', 'OpenClaw Agent の作成と管理、ID・モデル・ワークスペースの設定', 'OpenClaw Agent 생성 및 관리, ID·모델·워크스페이스 설정', 'Tạo và quản lý OpenClaw Agent', 'Crear y gestionar OpenClaw Agents', 'Criar e gerenciar OpenClaw Agents', 'Создание и управление агентами OpenClaw', 'Créer et gérer les Agents OpenClaw', 'OpenClaw-Agenten erstellen und verwalten'),
+  desc: _('创建和管理 智能体 Agent，配置身份、模型和工作区', 'Create and manage 智能体 Agents, configure identity, model and workspace', '建立和管理 智能体 Agent，設定身份、模型和工作區', '智能体 Agent の作成と管理、ID・モデル・ワークスペースの設定', '智能体 Agent 생성 및 관리, ID·모델·워크스페이스 설정', 'Tạo và quản lý 智能体 Agent', 'Crear y gestionar 智能体 Agents', 'Criar e gerenciar 智能体 Agents', 'Создание и управление агентами 智能体', 'Créer et gérer les Agents 智能体', '智能体-Agenten erstellen und verwalten'),
   addAgent: _('+ 新建 Agent', '+ New Agent', '', '+ 新規 Agent', '+ 새 Agent', '+ Agent mới', '+ Nuevo Agent', '+ Novo Agent', '+ Новый агент', '+ Nouvel Agent', '+ Neuer Agent'),
   noAgents: _('暂无 Agent', 'No agents', '暫無 Agent', 'Agent なし', 'Agent 없음', 'Không có Agent', 'Sin Agentes', 'Sem Agentes', 'Нет агентов', 'Aucun Agent', 'Keine Agenten'),
   loadFailed: _('加载失败', 'Load failed', '載入失敗', '読み込み失敗', '로드 실패', 'Tải thất bại', 'Error al cargar', 'Falha ao carregar', 'Ошибка загрузки', 'Échec du chargement', 'Laden fehlgeschlagen'),

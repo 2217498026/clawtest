@@ -2,19 +2,10 @@
 #define MyAppName "My Program"
 #define MyAppVersion "1.5"
 #define MyAppPublisher "My Company, Inc."
-#define MyAppExeName "OpenClaw_0.1.13_x64-setup.exe"
+#define MyAppExeName "QDbot_0.1.17_x64-setup.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".myp"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
-
-
-
-
-
-
-
-
-
 
 
 
@@ -36,7 +27,7 @@ PrivilegesRequired=admin
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64compatible
 
-OutputBaseFilename=mysetup
+OutputBaseFilename=QDbot_0.1.17_x64-setup
 SolidCompression=yes
 WizardStyle=modern dynamic
 
